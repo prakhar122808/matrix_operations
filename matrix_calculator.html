@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Matrix Calculator</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f3f5f7;
+text-align:center;
+margin:30px;
+}
+
+h1{
+margin-bottom:10px;
+}
+
+.controls{
+margin-bottom:20px;
+}
+
+.matrix-wrapper{
+display:flex;
+justify-content:center;
+gap:60px;
+margin:20px 0;
+}
+
+.matrix{
+display:grid;
+gap:5px;
+}
+
+.matrix input{
+width:50px;
+height:40px;
+text-align:center;
+font-size:16px;
+}
+
+.result-matrix{
+display:grid;
+gap:5px;
+justify-content:center;
+margin-top:10px;
+}
+
+.result-cell{
+width:60px;
+height:40px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:white;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px 15px;
+margin:5px;
+cursor:pointer;
+border:none;
+background:#2d7df6;
+color:white;
+border-radius:4px;
+}
+
+button:hover{
+background:#1c5ed6;
+}
+
+#steps{
+margin-top:15px;
+background:white;
+padding:10px;
+display:inline-block;
+max-width:600px;
+text-align:left;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Matrix Calculator</h1>
+
+<div class="controls">
+Matrix Size:
+<select id="size" onchange="createMatrices()">
+<option>2</option>
+<option selected>3</option>
+<option>4</option>
+<option>5</option>
+<option>6</option>
+</select>
+</div>
+
+<div class="matrix-wrapper">
+
+<div>
+<h3>Matrix A</h3>
+<div id="matA" class="matrix"></div>
+</div>
+
+<div>
+<h3>Matrix B</h3>
+<div id="matB" class="matrix"></div>
+</div>
+
+</div>
+
+<div>
+<button onclick="add()">Add</button>
+<button onclick="sub()">Subtract</button>
+<button onclick="mult()">Multiply</button>
+<button onclick="transpose()">Transpose A</button>
+<button onclick="determinant()">Determinant A</button>
+<button onclick="inverse()">Inverse A</button>
+</div>
+
+<h3>Result</h3>
+<div id="result" class="result-matrix"></div>
+
+<div id="steps"></div>
+
+<script>
+
+let N=3
+
+function createMatrices(){
+
+N=parseInt(document.getElementById("size").value)
+
+let matA=document.getElementById("matA")
+let matB=document.getElementById("matB")
+
+matA.innerHTML=""
+matB.innerHTML=""
+
+matA.style.gridTemplateColumns=`repeat(${N},50px)`
+matB.style.gridTemplateColumns=`repeat(${N},50px)`
+
+for(let i=0;i<N*N;i++){
+
+let a=document.createElement("input")
+a.type="number"
+a.value=0
+matA.appendChild(a)
+
+let b=document.createElement("input")
+b.type="number"
+b.value=0
+matB.appendChild(b)
+
+}
+
+clearResult()
+
+}
+
+createMatrices()
+
+function getMatrix(id){
+
+let inputs=document.querySelectorAll(`#${id} input`)
+let m=[]
+
+for(let i=0;i<N;i++){
+m[i]=[]
+for(let j=0;j<N;j++){
+m[i][j]=Number(inputs[i*N+j].value)
+}
+}
+
+return m
+}
+
+function displayMatrix(mat){
+
+let result=document.getElementById("result")
+result.innerHTML=""
+result.style.gridTemplateColumns=`repeat(${mat.length},60px)`
+
+for(let i=0;i<mat.length;i++){
+for(let j=0;j<mat.length;j++){
+
+let cell=document.createElement("div")
+cell.className="result-cell"
+cell.textContent=Math.round(mat[i][j]*1000)/1000
+
+result.appendChild(cell)
+
+}
+}
+
+}
+
+function clearResult(){
+document.getElementById("result").innerHTML=""
+document.getElementById("steps").innerHTML=""
+}
+
+function add(){
+
+let A=getMatrix("matA")
+let B=getMatrix("matB")
+
+let R=A.map((row,i)=>row.map((v,j)=>v+B[i][j]))
+
+displayMatrix(R)
+
+}
+
+function sub(){
+
+let A=getMatrix("matA")
+let B=getMatrix("matB")
+
+let R=A.map((row,i)=>row.map((v,j)=>v-B[i][j]))
+
+displayMatrix(R)
+
+}
+
+function mult(){
+
+let A=getMatrix("matA")
+let B=getMatrix("matB")
+
+let R=Array.from({length:N},()=>Array(N).fill(0))
+
+for(let i=0;i<N;i++)
+for(let j=0;j<N;j++)
+for(let k=0;k<N;k++)
+R[i][j]+=A[i][k]*B[k][j]
+
+displayMatrix(R)
+
+}
+
+function transpose(){
+
+let A=getMatrix("matA")
+let R=Array.from({length:N},()=>Array(N).fill(0))
+
+for(let i=0;i<N;i++)
+for(let j=0;j<N;j++)
+R[i][j]=A[j][i]
+
+displayMatrix(R)
+
+}
+
+function detRecursive(mat){
+
+let n=mat.length
+
+if(n===1) return mat[0][0]
+
+if(n===2)
+return mat[0][0]*mat[1][1]-mat[0][1]*mat[1][0]
+
+let det=0
+
+for(let p=0;p<n;p++){
+
+let sub=[]
+
+for(let i=1;i<n;i++){
+
+let row=[]
+
+for(let j=0;j<n;j++)
+if(j!==p) row.push(mat[i][j])
+
+sub.push(row)
+
+}
+
+det+=((p%2===0?1:-1)*mat[0][p]*detRecursive(sub))
+
+}
+
+return det
+
+}
+
+function determinant(){
+
+let A=getMatrix("matA")
+
+let det=detRecursive(A)
+
+document.getElementById("steps").innerHTML=
+"<b>Determinant:</b> "+det+
+"<br><br>Expanded using cofactor expansion along first row."
+
+displayMatrix([[det]])
+
+}
+
+function inverse(){
+
+let A=getMatrix("matA")
+
+let det=detRecursive(A)
+
+if(det===0){
+
+document.getElementById("steps").innerHTML="Inverse does not exist (determinant = 0)"
+clearResult()
+return
+
+}
+
+let n=A.length
+let adj=[]
+
+for(let i=0;i<n;i++){
+
+adj[i]=[]
+
+for(let j=0;j<n;j++){
+
+let sub=[]
+
+for(let r=0;r<n;r++){
+
+if(r===i) continue
+
+let row=[]
+
+for(let c=0;c<n;c++)
+if(c!==j) row.push(A[r][c])
+
+sub.push(row)
+
+}
+
+let cofactor=((i+j)%2===0?1:-1)*detRecursive(sub)
+
+adj[i][j]=cofactor
+
+}
+
+}
+
+let adjT=Array.from({length:n},()=>Array(n))
+
+for(let i=0;i<n;i++)
+for(let j=0;j<n;j++)
+adjT[i][j]=adj[j][i]/det
+
+displayMatrix(adjT)
+
+document.getElementById("steps").innerHTML=
+"<b>Inverse computed using:</b><br>Inverse = adj(A) / det(A)"
+
+}
+
+</script>
+
+</body>
+</html>
