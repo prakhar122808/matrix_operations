@@ -1,163 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <title>Matrix Calculator</title>
 
 <style>
 
-*{
-box-sizing:border-box;
+* {
+    box-sizing: border-box;
 }
 
-body{
-margin:0;
-font-family:Segoe UI,Arial;
-background:#3f3f43;
-color:#e5e7eb;
+body {
+    margin: 0;
+    font-family: Segoe UI, Arial;
+    background: #3f3f43;
+    color: #e5e7eb;
 }
 
 /* Layout */
 
-.wrapper{
-display:flex;
-min-height:100vh;
+.wrapper {
+    display: flex;
+    min-height: 100vh;
 }
 
 /* Sidebar */
 
-.sidebar{
-width:230px;
-background:#2f2f33;
-padding-top:30px;
-border-right:1px solid #444;
+.sidebar {
+    width: 230px;
+    background: #2f2f33;
+    border-right: 1px solid #444;
+    padding-top: 30px;
 }
 
-.menu-item{
-padding:14px 22px;
-border-bottom:1px solid #3e3e42;
-cursor:pointer;
-color:#d1d5db;
+.menu-item {
+    padding: 14px 22px;
+    border-bottom: 1px solid #3e3e42;
+    cursor: pointer;
+    transition: all .25s ease;
 }
 
-.menu-item:hover{
-background:#404046;
+.menu-item:hover {
+    background: #404046;
+    transform: translateX(6px);
 }
 
-.menu-item.active{
-background:#d97706;
-color:white;
-font-weight:600;
+.menu-item.active {
+    background: #d97706;
+    color: white;
+    font-weight: 600;
 }
 
-/* Main content */
+/* Main panel */
 
-.content{
-flex:1;
-display:flex;
-justify-content:center;
-padding:40px 20px;
+.content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
 }
 
-.panel{
-width:850px;
-background:#4a4a4f;
-border-radius:12px;
-padding:35px;
-box-shadow:0 10px 30px rgba(0,0,0,0.35);
+.panel {
+    width: 900px;
+    background: #4a4a4f;
+    border-radius: 12px;
+    padding: 35px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
-.title{
-text-align:center;
-font-size:26px;
-margin-bottom:25px;
+.title {
+    text-align: center;
+    font-size: 26px;
+    margin-bottom: 20px;
 }
 
-.description{
-color:#cbd5f5;
-font-size:14px;
-line-height:1.6;
-margin-bottom:30px;
+/* Matrix inputs */
+
+.matrix-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
 }
 
-/* Matrix area */
-
-.matrix-container{
-display:flex;
-justify-content:center;
-gap:40px;
-margin-bottom:20px;
+.matrix {
+    display: grid;
+    gap: 6px;
 }
 
-.matrix{
-display:grid;
-gap:6px;
+.matrix input {
+    width: 50px;
+    height: 40px;
+    background: #2f2f33;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: white;
+    text-align: center;
 }
 
-.matrix input{
-width:50px;
-height:40px;
-background:#2f2f33;
-border:1px solid #555;
-border-radius:5px;
-color:white;
-text-align:center;
+/* Compute button */
+
+.compute-btn {
+    display: block;
+    margin: 25px auto;
+    background: #d97706;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 6px;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
 }
 
-/* Buttons */
-
-.buttons{
-display:flex;
-flex-wrap:wrap;
-justify-content:center;
-gap:10px;
-margin-top:20px;
+.compute-btn:hover {
+    background: #f59e0b;
 }
 
-button{
-background:#6b7280;
-border:none;
-padding:10px 16px;
-border-radius:5px;
-color:white;
-cursor:pointer;
+/* Loading */
+
+#loading{
+    font-size:14px;
+    color:#facc15;
+    animation:pulse 1s infinite;
 }
 
-button:hover{
-background:#9ca3af;
+@keyframes pulse{
+    0%{opacity:0.3}
+    50%{opacity:1}
+    100%{opacity:0.3}
 }
 
 /* Result */
 
-.result{
-margin-top:30px;
-text-align:center;
+.result {
+    margin-top: 20px;
+    text-align: center;
+    display: none;
 }
 
-.result-grid{
-display:grid;
-gap:6px;
-justify-content:center;
-margin-top:15px;
+.matrix-display {
+    display: inline-flex;
+    align-items: center;
 }
 
-.cell{
-width:55px;
-height:40px;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#2f2f33;
-border:1px solid #555;
-border-radius:5px;
+.matrix-bracket {
+    font-size: 42px;
+    padding: 0 10px;
 }
 
-.steps{
-margin-top:20px;
-background:#2f2f33;
-padding:12px;
-border-radius:6px;
-font-size:14px;
+.matrix-grid {
+    display: grid;
+    gap: 6px;
+}
+
+.cell {
+    width: 55px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2f2f33;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+.highlight {
+    background: #2563eb !important;
+}
+
+.steps {
+    margin-top: 20px;
+    background: #2f2f33;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: left;
 }
 
 </style>
@@ -167,35 +185,25 @@ font-size:14px;
 
 <div class="wrapper">
 
-<!-- Sidebar -->
-
 <div class="sidebar">
 
-<div class="menu-item active">Matrix Calculator</div>
-<div class="menu-item">Determinant</div>
-<div class="menu-item">Inverse Matrix</div>
-<div class="menu-item">Matrix Rank</div>
-<div class="menu-item">Transpose</div>
-<div class="menu-item">Addition / Subtraction</div>
+<div class="menu-item active" onclick="setOperation('add',this)">Addition</div>
+<div class="menu-item" onclick="setOperation('sub',this)">Subtraction</div>
+<div class="menu-item" onclick="setOperation('mult',this)">Multiplication</div>
+<div class="menu-item" onclick="setOperation('transpose',this)">Transpose</div>
+<div class="menu-item" onclick="setOperation('det',this)">Determinant</div>
+<div class="menu-item" onclick="setOperation('inv',this)">Inverse</div>
 
 </div>
-
-<!-- Main -->
 
 <div class="content">
 
 <div class="panel">
 
-<div class="title">Matrix Calculator</div>
+<div class="title" id="operationTitle">Matrix Addition</div>
 
-<div class="description">
-Perform matrix operations such as addition, subtraction, multiplication,
-transpose, determinant, and inverse. Enter matrix values below and select
-an operation to compute the result.
-</div>
-
-<div style="text-align:center;margin-bottom:15px;">
-Matrix size:
+<div style="text-align:center">
+Matrix size
 <select id="size" onchange="createMatrices()">
 <option>2</option>
 <option selected>3</option>
@@ -206,35 +214,28 @@ Matrix size:
 
 <div class="matrix-container">
 
-<div>
-<div style="text-align:center;margin-bottom:6px;">Matrix A</div>
+<div id="matrixA">
+<div style="text-align:center">Matrix A</div>
 <div id="matA" class="matrix"></div>
 </div>
 
-<div>
-<div style="text-align:center;margin-bottom:6px;">Matrix B</div>
+<div id="matrixB">
+<div style="text-align:center">Matrix B</div>
 <div id="matB" class="matrix"></div>
 </div>
 
 </div>
 
-<div class="buttons">
+<button class="compute-btn" onclick="compute()">Compute</button>
 
-<button onclick="add()">Add</button>
-<button onclick="sub()">Subtract</button>
-<button onclick="mult()">Multiply</button>
-<button onclick="transpose()">Transpose</button>
-<button onclick="determinant()">Determinant</button>
-<button onclick="inverse()">Inverse</button>
-
+<div id="loading" style="display:none;margin-top:10px;">
+    Computing...
 </div>
 
-<div class="result">
+<div class="result" id="resultSection">
 
 <h3>Result</h3>
-
-<div id="result" class="result-grid"></div>
-
+<div id="result"></div>
 <div id="steps" class="steps"></div>
 
 </div>
@@ -247,189 +248,364 @@ Matrix size:
 
 <script>
 
-let N = 3;
+/* Global state */
+
+let N = 3
+let operation = "add"
+
+/* Sidebar operation selection */
+
+function setOperation(op, element) {
+
+    operation = op
+
+    document
+        .querySelectorAll(".menu-item")
+        .forEach(item => item.classList.remove("active"))
+
+    element.classList.add("active")
+
+    const titles = {
+        add: "Matrix Addition",
+        sub: "Matrix Subtraction",
+        mult: "Matrix Multiplication",
+        transpose: "Matrix Transpose",
+        det: "Matrix Determinant",
+        inv: "Matrix Inverse"
+    }
+
+    document.getElementById("operationTitle").textContent = titles[op]
+
+    if (op === "add" || op === "sub" || op === "mult") {
+        document.getElementById("matrixB").style.display = "block"
+    } else {
+        document.getElementById("matrixB").style.display = "none"
+    }
+
+    document.getElementById("resultSection").style.display = "none"
+}
+
+/* Create matrix input fields */
 
 function createMatrices() {
-  N = parseInt(document.getElementById("size").value);
 
-  let A = document.getElementById("matA");
-  let B = document.getElementById("matB");
+    N = parseInt(document.getElementById("size").value)
 
-  A.innerHTML = "";
-  B.innerHTML = "";
+    const A = document.getElementById("matA")
+    const B = document.getElementById("matB")
 
-  A.style.gridTemplateColumns = `repeat(${N},50px)`;
-  B.style.gridTemplateColumns = `repeat(${N},50px)`;
+    A.innerHTML = ""
+    B.innerHTML = ""
 
-  for (let i = 0; i < N * N; i++) {
-    let a = document.createElement("input");
-    a.type = "number";
-    a.value = 0;
-    A.appendChild(a);
+    A.style.gridTemplateColumns = `repeat(${N},50px)`
+    B.style.gridTemplateColumns = `repeat(${N},50px)`
 
-    let b = document.createElement("input");
-    b.type = "number";
-    b.value = 0;
-    B.appendChild(b);
-  }
+    for (let i = 0; i < N * N; i++) {
 
-  clear();
+        const a = document.createElement("input")
+        a.type = "number"
+        a.value = 0
+        A.appendChild(a)
+
+        const b = document.createElement("input")
+        b.type = "number"
+        b.value = 0
+        B.appendChild(b)
+    }
 }
 
-createMatrices();
+createMatrices()
+
+/* Read matrix from inputs */
 
 function getMatrix(id) {
-  let inputs = document.querySelectorAll(`#${id} input`);
-  let m = [];
 
-  for (let i = 0; i < N; i++) {
-    m[i] = [];
+    const inputs = document.querySelectorAll(`#${id} input`)
+    const m = []
 
-    for (let j = 0; j < N; j++) m[i][j] = Number(inputs[i * N + j].value);
-  }
+    for (let i = 0; i < N; i++) {
 
-  return m;
-}
+        m[i] = []
 
-function show(mat) {
-  let res = document.getElementById("result");
-  res.innerHTML = "";
-  res.style.gridTemplateColumns = `repeat(${mat.length},55px)`;
-
-  for (let i = 0; i < mat.length; i++)
-    for (let j = 0; j < mat.length; j++) {
-      let c = document.createElement("div");
-      c.className = "cell";
-      c.textContent = Math.round(mat[i][j] * 1000) / 1000;
-      res.appendChild(c);
-    }
-}
-
-function clear() {
-  document.getElementById("result").innerHTML = "";
-  document.getElementById("steps").innerHTML = "";
-}
-
-function add() {
-  let A = getMatrix("matA");
-  let B = getMatrix("matB");
-
-  let R = A.map((r, i) => r.map((v, j) => v + B[i][j]));
-
-  show(R);
-}
-
-function sub() {
-  let A = getMatrix("matA");
-  let B = getMatrix("matB");
-
-  let R = A.map((r, i) => r.map((v, j) => v - B[i][j]));
-
-  show(R);
-}
-
-function mult() {
-  let A = getMatrix("matA");
-  let B = getMatrix("matB");
-
-  let R = Array.from({ length: N }, () => Array(N).fill(0));
-
-  for (let i = 0; i < N; i++)
-    for (let j = 0; j < N; j++)
-      for (let k = 0; k < N; k++) R[i][j] += A[i][k] * B[k][j];
-
-  show(R);
-}
-
-function transpose() {
-  let A = getMatrix("matA");
-
-  let R = Array.from({ length: N }, () => Array(N));
-
-  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) R[i][j] = A[j][i];
-
-  show(R);
-}
-
-function detRec(m) {
-  let n = m.length;
-
-  if (n === 1) return m[0][0];
-
-  if (n === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
-
-  let d = 0;
-
-  for (let p = 0; p < n; p++) {
-    let sub = [];
-
-    for (let i = 1; i < n; i++) {
-      let row = [];
-
-      for (let j = 0; j < n; j++) if (j !== p) row.push(m[i][j]);
-
-      sub.push(row);
+        for (let j = 0; j < N; j++) {
+            m[i][j] = Number(inputs[i * N + j].value)
+        }
     }
 
-    d += (p % 2 === 0 ? 1 : -1) * m[0][p] * detRec(sub);
-  }
-
-  return d;
+    return m
 }
 
-function determinant() {
-  let A = getMatrix("matA");
+/* Display matrix */
 
-  let d = detRec(A);
+function showMatrix(matrix) {
 
-  document.getElementById("steps").innerHTML =
-    "Determinant computed using cofactor expansion.";
+    const result = document.getElementById("result")
+    const section = document.getElementById("resultSection")
 
-  show([[d]]);
+    section.style.display = "block"
+    result.innerHTML = ""
+
+    const wrapper = document.createElement("div")
+    wrapper.className = "matrix-display"
+
+    const left = document.createElement("div")
+    left.className = "matrix-bracket"
+    left.textContent = "["
+
+    const right = document.createElement("div")
+    right.className = "matrix-bracket"
+    right.textContent = "]"
+
+    const grid = document.createElement("div")
+    grid.className = "matrix-grid"
+    grid.style.gridTemplateColumns = `repeat(${matrix.length},55px)`
+
+    matrix.forEach(row => {
+
+        row.forEach(value => {
+
+            const cell = document.createElement("div")
+            cell.className = "cell"
+            cell.textContent = Math.round(value * 1000) / 1000
+            grid.appendChild(cell)
+        })
+    })
+
+    wrapper.appendChild(left)
+    wrapper.appendChild(grid)
+    wrapper.appendChild(right)
+
+    result.appendChild(wrapper)
 }
 
-function inverse() {
-  let A = getMatrix("matA");
+/* Determinant (recursive) */
 
-  let d = detRec(A);
+function determinant(m) {
 
-  if (d === 0) {
-    document.getElementById("steps").innerHTML =
-      "Inverse does not exist (determinant = 0).";
+    const n = m.length
 
-    clear();
-    return;
-  }
-
-  let n = A.length;
-  let adj = [];
-
-  for (let i = 0; i < n; i++) {
-    adj[i] = [];
-
-    for (let j = 0; j < n; j++) {
-      let sub = [];
-
-      for (let r = 0; r < n; r++) {
-        if (r === i) continue;
-
-        let row = [];
-
-        for (let c = 0; c < n; c++) if (c !== j) row.push(A[r][c]);
-
-        sub.push(row);
-      }
-
-      adj[i][j] = ((i + j) % 2 === 0 ? 1 : -1) * detRec(sub);
+    if (n === 1) {
+        return m[0][0]
     }
-  }
 
-  let inv = Array.from({ length: n }, () => Array(n));
+    if (n === 2) {
+        return m[0][0] * m[1][1] - m[0][1] * m[1][0]
+    }
 
-  for (let i = 0; i < n; i++)
-    for (let j = 0; j < n; j++) inv[i][j] = adj[j][i] / d;
+    let det = 0
 
-  show(inv);
+    for (let p = 0; p < n; p++) {
+
+        const sub = []
+
+        for (let i = 1; i < n; i++) {
+
+            const row = []
+
+            for (let j = 0; j < n; j++) {
+                if (j !== p) {
+                    row.push(m[i][j])
+                }
+            }
+
+            sub.push(row)
+        }
+
+        det += (p % 2 === 0 ? 1 : -1) * m[0][p] * determinant(sub)
+    }
+
+    return det
+}
+
+/* Animated multiplication */
+
+async function multiplyAnimated(A, B) {
+
+    if (N >= 4) {
+
+        fastMultiply(A,B)
+        return
+    }
+    const loading = document.getElementById("loading")
+    loading.style.display = "block"
+
+    const R = Array.from({ length: N }, () => Array(N).fill(0))
+    let explanation = ""
+
+    const delay = N <= 3 ? 120 : 40
+
+    for (let i = 0; i < N; i++) {
+
+        for (let j = 0; j < N; j++) {
+
+            let sum = 0
+            explanation += `<b>Cell (${i + 1},${j + 1})</b>: `
+
+            for (let k = 0; k < N; k++) {
+
+                sum += A[i][k] * B[k][j]
+
+                explanation += `${A[i][k]}×${B[k][j]}`
+                if (k < N - 1) explanation += " + "
+
+                await new Promise(r => setTimeout(r, delay))
+            }
+
+            explanation += ` = ${sum}<br>`
+            R[i][j] = sum
+        }
+    }
+
+    loading.style.display = "none"
+
+    showMatrix(R)
+    document.getElementById("steps").innerHTML = explanation
+}
+
+/* Fast multiplication (without animation) */
+
+function fastMultiply(A,B){
+
+    const R = Array.from({length:N},()=>Array(N).fill(0))
+
+    for(let i=0;i<N;i++){
+        for(let j=0;j<N;j++){
+            for(let k=0;k<N;k++){
+                R[i][j]+=A[i][k]*B[k][j]
+            }
+        }
+    }
+
+    showMatrix(R)
+}
+
+/* Compute operation */
+
+function compute() {
+
+    const A = getMatrix("matA")
+    const B = getMatrix("matB")
+
+    const steps = document.getElementById("steps")
+    steps.innerHTML = ""
+
+    if (operation === "add") {
+
+        const R = A.map((row, i) =>
+            row.map((v, j) => v + B[i][j])
+        )
+
+        showMatrix(R)
+
+        let explanation = ""
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                explanation += `(${A[i][j]} + ${B[i][j]}) = ${R[i][j]}<br>`
+            }
+        }
+
+        steps.innerHTML = explanation
+    }
+
+    if (operation === "sub") {
+
+        const R = A.map((row, i) =>
+            row.map((v, j) => v - B[i][j])
+        )
+
+        showMatrix(R)
+
+        let explanation = ""
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                explanation += `(${A[i][j]} - ${B[i][j]}) = ${R[i][j]}<br>`
+            }
+        }
+
+        steps.innerHTML = explanation
+    }
+
+    if (operation === "mult") {
+        multiplyAnimated(A, B)
+        return
+    }
+
+    if (operation === "transpose") {
+
+        const R = Array.from({ length: N }, () => Array(N))
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                R[i][j] = A[j][i]
+            }
+        }
+
+        showMatrix(R)
+    }
+
+    if (operation === "det") {
+
+        const d = determinant(A)
+        showMatrix([[d]])
+
+        steps.innerHTML =
+            "Determinant computed using cofactor expansion."
+    }
+
+    if (operation === "inv") {
+
+        const d = determinant(A)
+
+        if (d === 0) {
+
+            document.getElementById("resultSection").style.display = "block"
+            document.getElementById("result").innerHTML = ""
+            steps.innerHTML = "Inverse does not exist."
+            return
+        }
+
+        const adj = []
+
+        for (let i = 0; i < N; i++) {
+
+            adj[i] = []
+
+            for (let j = 0; j < N; j++) {
+
+                const sub = []
+
+                for (let r = 0; r < N; r++) {
+
+                    if (r === i) continue
+
+                    const row = []
+
+                    for (let c = 0; c < N; c++) {
+                        if (c !== j) row.push(A[r][c])
+                    }
+
+                    sub.push(row)
+                }
+
+                adj[i][j] =
+                    ((i + j) % 2 === 0 ? 1 : -1) *
+                    determinant(sub)
+            }
+        }
+
+        const inv = Array.from({ length: N }, () => Array(N))
+
+        for (let i = 0; i < N; i++) {
+            for (let j = 0; j < N; j++) {
+                inv[i][j] = adj[j][i] / d
+            }
+        }
+
+        showMatrix(inv)
+        steps.innerHTML = "Inverse = adj(A) / det(A)"
+    }
 }
 
 </script>
