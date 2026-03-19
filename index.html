@@ -1,614 +1,217 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-<meta charset="UTF-8">
-<title>Matrix Calculator</title>
-
-<style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: Segoe UI, Arial;
-    background: #3f3f43;
-    color: #e5e7eb;
-}
-
-/* Layout */
-
-.wrapper {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* Sidebar */
-
-.sidebar {
-    width: 230px;
-    background: #2f2f33;
-    border-right: 1px solid #444;
-    padding-top: 30px;
-}
-
-.menu-item {
-    padding: 14px 22px;
-    border-bottom: 1px solid #3e3e42;
-    cursor: pointer;
-    transition: all .25s ease;
-}
-
-.menu-item:hover {
-    background: #404046;
-    transform: translateX(6px);
-}
-
-.menu-item.active {
-    background: #d97706;
-    color: white;
-    font-weight: 600;
-}
-
-/* Main panel */
-
-.content {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-}
-
-.panel {
-    width: 900px;
-    background: #4a4a4f;
-    border-radius: 12px;
-    padding: 35px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.title {
-    text-align: center;
-    font-size: 26px;
-    margin-bottom: 20px;
-}
-
-/* Matrix inputs */
-
-.matrix-container {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 20px;
-}
-
-.matrix {
-    display: grid;
-    gap: 6px;
-}
-
-.matrix input {
-    width: 50px;
-    height: 40px;
-    background: #2f2f33;
-    border: 1px solid #555;
-    border-radius: 5px;
-    color: white;
-    text-align: center;
-}
-
-/* Compute button */
-
-.compute-btn {
-    display: block;
-    margin: 25px auto;
-    background: #d97706;
-    border: none;
-    padding: 12px 22px;
-    border-radius: 6px;
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.compute-btn:hover {
-    background: #f59e0b;
-}
-
-/* Loading */
-
-#loading{
-    font-size:14px;
-    color:#facc15;
-    animation:pulse 1s infinite;
-}
-
-@keyframes pulse{
-    0%{opacity:0.3}
-    50%{opacity:1}
-    100%{opacity:0.3}
-}
-
-/* Result */
-
-.result {
-    margin-top: 20px;
-    text-align: center;
-    display: none;
-}
-
-.matrix-display {
-    display: inline-flex;
-    align-items: center;
-}
-
-.matrix-bracket {
-    font-size: 42px;
-    padding: 0 10px;
-}
-
-.matrix-grid {
-    display: grid;
-    gap: 6px;
-}
-
-.cell {
-    width: 55px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #2f2f33;
-    border: 1px solid #555;
-    border-radius: 4px;
-}
-
-.highlight {
-    background: #2563eb !important;
-}
-
-.steps {
-    margin-top: 20px;
-    background: #2f2f33;
-    padding: 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    text-align: left;
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="wrapper">
-
-<div class="sidebar">
-
-<div class="menu-item active" onclick="setOperation('add',this)">Addition</div>
-<div class="menu-item" onclick="setOperation('sub',this)">Subtraction</div>
-<div class="menu-item" onclick="setOperation('mult',this)">Multiplication</div>
-<div class="menu-item" onclick="setOperation('transpose',this)">Transpose</div>
-<div class="menu-item" onclick="setOperation('det',this)">Determinant</div>
-<div class="menu-item" onclick="setOperation('inv',this)">Inverse</div>
-
-</div>
-
-<div class="content">
-
-<div class="panel">
-
-<div class="title" id="operationTitle">Matrix Addition</div>
-
-<div style="text-align:center">
-Matrix size
-<select id="size" onchange="createMatrices()">
-<option>2</option>
-<option selected>3</option>
-<option>4</option>
-<option>5</option>
-</select>
-</div>
-
-<div class="matrix-container">
-
-<div id="matrixA">
-<div style="text-align:center">Matrix A</div>
-<div id="matA" class="matrix"></div>
-</div>
-
-<div id="matrixB">
-<div style="text-align:center">Matrix B</div>
-<div id="matB" class="matrix"></div>
-</div>
-
-</div>
-
-<button class="compute-btn" onclick="compute()">Compute</button>
-
-<div id="loading" style="display:none;margin-top:10px;">
-    Computing...
-</div>
-
-<div class="result" id="resultSection">
-
-<h3>Result</h3>
-<div id="result"></div>
-<div id="steps" class="steps"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<script>
-
-/* Global state */
-
-let N = 3
-let operation = "add"
-
-/* Sidebar operation selection */
-
-function setOperation(op, element) {
-
-    operation = op
-
-    document
-        .querySelectorAll(".menu-item")
-        .forEach(item => item.classList.remove("active"))
-
-    element.classList.add("active")
-
-    const titles = {
-        add: "Matrix Addition",
-        sub: "Matrix Subtraction",
-        mult: "Matrix Multiplication",
-        transpose: "Matrix Transpose",
-        det: "Matrix Determinant",
-        inv: "Matrix Inverse"
-    }
-
-    document.getElementById("operationTitle").textContent = titles[op]
-
-    if (op === "add" || op === "sub" || op === "mult") {
-        document.getElementById("matrixB").style.display = "block"
-    } else {
-        document.getElementById("matrixB").style.display = "none"
-    }
-
-    document.getElementById("resultSection").style.display = "none"
-}
-
-/* Create matrix input fields */
-
-function createMatrices() {
-
-    N = parseInt(document.getElementById("size").value)
-
-    const A = document.getElementById("matA")
-    const B = document.getElementById("matB")
-
-    A.innerHTML = ""
-    B.innerHTML = ""
-
-    A.style.gridTemplateColumns = `repeat(${N},50px)`
-    B.style.gridTemplateColumns = `repeat(${N},50px)`
-
-    for (let i = 0; i < N * N; i++) {
-
-        const a = document.createElement("input")
-        a.type = "number"
-        a.value = 0
-        A.appendChild(a)
-
-        const b = document.createElement("input")
-        b.type = "number"
-        b.value = 0
-        B.appendChild(b)
-    }
-}
-
-createMatrices()
-
-/* Read matrix from inputs */
-
-function getMatrix(id) {
-
-    const inputs = document.querySelectorAll(`#${id} input`)
-    const m = []
-
-    for (let i = 0; i < N; i++) {
-
-        m[i] = []
-
-        for (let j = 0; j < N; j++) {
-            m[i][j] = Number(inputs[i * N + j].value)
-        }
-    }
-
-    return m
-}
-
-/* Display matrix */
-
-function showMatrix(matrix) {
-
-    const result = document.getElementById("result")
-    const section = document.getElementById("resultSection")
-
-    section.style.display = "block"
-    result.innerHTML = ""
-
-    const wrapper = document.createElement("div")
-    wrapper.className = "matrix-display"
-
-    const left = document.createElement("div")
-    left.className = "matrix-bracket"
-    left.textContent = "["
-
-    const right = document.createElement("div")
-    right.className = "matrix-bracket"
-    right.textContent = "]"
-
-    const grid = document.createElement("div")
-    grid.className = "matrix-grid"
-    grid.style.gridTemplateColumns = `repeat(${matrix.length},55px)`
-
-    matrix.forEach(row => {
-
-        row.forEach(value => {
-
-            const cell = document.createElement("div")
-            cell.className = "cell"
-            cell.textContent = Math.round(value * 1000) / 1000
-            grid.appendChild(cell)
-        })
-    })
-
-    wrapper.appendChild(left)
-    wrapper.appendChild(grid)
-    wrapper.appendChild(right)
-
-    result.appendChild(wrapper)
-}
-
-/* Determinant (recursive) */
-
-function determinant(m) {
-
-    const n = m.length
-
-    if (n === 1) {
-        return m[0][0]
-    }
-
-    if (n === 2) {
-        return m[0][0] * m[1][1] - m[0][1] * m[1][0]
-    }
-
-    let det = 0
-
-    for (let p = 0; p < n; p++) {
-
-        const sub = []
-
-        for (let i = 1; i < n; i++) {
-
-            const row = []
-
-            for (let j = 0; j < n; j++) {
-                if (j !== p) {
-                    row.push(m[i][j])
-                }
-            }
-
-            sub.push(row)
-        }
-
-        det += (p % 2 === 0 ? 1 : -1) * m[0][p] * determinant(sub)
-    }
-
-    return det
-}
-
-/* Animated multiplication */
-
-async function multiplyAnimated(A, B) {
-
-    if (N >= 4) {
-
-        fastMultiply(A,B)
-        return
-    }
-    const loading = document.getElementById("loading")
-    loading.style.display = "block"
-
-    const R = Array.from({ length: N }, () => Array(N).fill(0))
-    let explanation = ""
-
-    const delay = N <= 3 ? 120 : 40
-
-    for (let i = 0; i < N; i++) {
-
-        for (let j = 0; j < N; j++) {
-
-            let sum = 0
-            explanation += `<b>Cell (${i + 1},${j + 1})</b>: `
-
-            for (let k = 0; k < N; k++) {
-
-                sum += A[i][k] * B[k][j]
-
-                explanation += `${A[i][k]}×${B[k][j]}`
-                if (k < N - 1) explanation += " + "
-
-                await new Promise(r => setTimeout(r, delay))
-            }
-
-            explanation += ` = ${sum}<br>`
-            R[i][j] = sum
-        }
-    }
-
-    loading.style.display = "none"
-
-    showMatrix(R)
-    document.getElementById("steps").innerHTML = explanation
-}
-
-/* Fast multiplication (without animation) */
-
-function fastMultiply(A,B){
-
-    const R = Array.from({length:N},()=>Array(N).fill(0))
-
-    for(let i=0;i<N;i++){
-        for(let j=0;j<N;j++){
-            for(let k=0;k<N;k++){
-                R[i][j]+=A[i][k]*B[k][j]
-            }
-        }
-    }
-
-    showMatrix(R)
-}
-
-/* Compute operation */
-
-function compute() {
-
-    const A = getMatrix("matA")
-    const B = getMatrix("matB")
-
-    const steps = document.getElementById("steps")
-    steps.innerHTML = ""
-
-    if (operation === "add") {
-
-        const R = A.map((row, i) =>
-            row.map((v, j) => v + B[i][j])
-        )
-
-        showMatrix(R)
-
-        let explanation = ""
-
-        for (let i = 0; i < N; i++) {
-            for (let j = 0; j < N; j++) {
-                explanation += `(${A[i][j]} + ${B[i][j]}) = ${R[i][j]}<br>`
-            }
-        }
-
-        steps.innerHTML = explanation
-    }
-
-    if (operation === "sub") {
-
-        const R = A.map((row, i) =>
-            row.map((v, j) => v - B[i][j])
-        )
-
-        showMatrix(R)
-
-        let explanation = ""
-
-        for (let i = 0; i < N; i++) {
-            for (let j = 0; j < N; j++) {
-                explanation += `(${A[i][j]} - ${B[i][j]}) = ${R[i][j]}<br>`
-            }
-        }
-
-        steps.innerHTML = explanation
-    }
-
-    if (operation === "mult") {
-        multiplyAnimated(A, B)
-        return
-    }
-
-    if (operation === "transpose") {
-
-        const R = Array.from({ length: N }, () => Array(N))
-
-        for (let i = 0; i < N; i++) {
-            for (let j = 0; j < N; j++) {
-                R[i][j] = A[j][i]
-            }
-        }
-
-        showMatrix(R)
-    }
-
-    if (operation === "det") {
-
-        const d = determinant(A)
-        showMatrix([[d]])
-
-        steps.innerHTML =
-            "Determinant computed using cofactor expansion."
-    }
-
-    if (operation === "inv") {
-
-        const d = determinant(A)
-
-        if (d === 0) {
-
-            document.getElementById("resultSection").style.display = "block"
-            document.getElementById("result").innerHTML = ""
-            steps.innerHTML = "Inverse does not exist."
-            return
-        }
-
-        const adj = []
-
-        for (let i = 0; i < N; i++) {
-
-            adj[i] = []
-
-            for (let j = 0; j < N; j++) {
-
-                const sub = []
-
-                for (let r = 0; r < N; r++) {
-
-                    if (r === i) continue
-
-                    const row = []
-
-                    for (let c = 0; c < N; c++) {
-                        if (c !== j) row.push(A[r][c])
-                    }
-
-                    sub.push(row)
-                }
-
-                adj[i][j] =
-                    ((i + j) % 2 === 0 ? 1 : -1) *
-                    determinant(sub)
-            }
-        }
-
-        const inv = Array.from({ length: N }, () => Array(N))
-
-        for (let i = 0; i < N; i++) {
-            for (let j = 0; j < N; j++) {
-                inv[i][j] = adj[j][i] / d
-            }
-        }
-
-        showMatrix(inv)
-        steps.innerHTML = "Inverse = adj(A) / det(A)"
-    }
-}
-
-</script>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Matrix Calculator</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="top-bar">
+        <div>
+          <h1>Matrix calculator</h1>
+          <div class="shortcut-row">
+            <span class="shortcut-hint"
+              ><span class="kbd">↑↓←→</span> navigate cells</span
+            >
+            <span class="shortcut-hint"
+              ><span class="kbd">Enter</span> compute</span
+            >
+            <span class="shortcut-hint"><span class="kbd">R</span> reset</span>
+            <span class="shortcut-hint"
+              ><span class="kbd">Ctrl+C</span> copy result</span
+            >
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="dark-toggle" id="darkToggle" onclick="toggleDark()">
+            dark mode
+          </button>
+        </div>
+      </div>
+
+      <div class="workspace" id="workspace">
+        <div class="matrix-card" id="cardA">
+          <div class="card-header">
+            <div class="card-label">
+              <span class="label-badge">A</span>
+              Matrix A
+            </div>
+            <div class="quick-actions">
+              <button class="btn-sm" onclick="randomFill('A')">random</button>
+              <button class="btn-sm" onclick="identityFill('A')">
+                identity
+              </button>
+              <button class="btn-sm" onclick="clearMatrix('A')">clear</button>
+            </div>
+          </div>
+          <div class="size-controls">
+            <label>rows</label>
+            <select
+              class="size-select"
+              id="rowsA"
+              onchange="rebuildMatrix('A')"
+            >
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+            <label>cols</label>
+            <select
+              class="size-select"
+              id="colsA"
+              onchange="rebuildMatrix('A')"
+            >
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <div class="matrix-grid-wrap" style="padding: 0 12px">
+            <div class="matrix-grid" id="gridA"></div>
+          </div>
+        </div>
+
+        <div class="matrix-card" id="cardB">
+          <div class="card-header">
+            <div class="card-label">
+              <span class="label-badge b">B</span>
+              Matrix B
+            </div>
+            <div class="quick-actions">
+              <button class="btn-sm" onclick="randomFill('B')">random</button>
+              <button class="btn-sm" onclick="identityFill('B')">
+                identity
+              </button>
+              <button class="btn-sm" onclick="clearMatrix('B')">clear</button>
+            </div>
+          </div>
+          <div class="size-controls">
+            <label>rows</label>
+            <select
+              class="size-select"
+              id="rowsB"
+              onchange="rebuildMatrix('B')"
+            >
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+            <label>cols</label>
+            <select
+              class="size-select"
+              id="colsB"
+              onchange="rebuildMatrix('B')"
+            >
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <div class="matrix-grid-wrap" style="padding: 0 12px">
+            <div class="matrix-grid" id="gridB"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="op-row">
+        <select class="op-select" id="opSelect" onchange="onOpChange()">
+          <option value="multiply">A × B — multiply</option>
+          <option value="add">A + B — add</option>
+          <option value="subtract">A − B — subtract</option>
+          <option value="transpose">Aᵀ — transpose A</option>
+          <option value="determinant">det(A) — determinant</option>
+          <option value="inverse">A⁻¹ — inverse</option>
+          <option value="scalar">k × A — scalar multiply</option>
+          <option value="power">Aⁿ — matrix power</option>
+        </select>
+
+        <div class="scalar-input-wrap" id="scalarWrap" style="display: none">
+          <label for="scalarK">k =</label>
+          <input
+            type="number"
+            class="scalar-input"
+            id="scalarK"
+            value="2"
+            placeholder="k"
+          />
+        </div>
+        <div class="scalar-input-wrap" id="powerWrap" style="display: none">
+          <label for="powerN">n =</label>
+          <input
+            type="number"
+            class="scalar-input"
+            id="powerN"
+            value="2"
+            placeholder="n"
+            min="0"
+            max="10"
+          />
+        </div>
+
+        <button class="compute-btn" id="computeBtn" onclick="compute()">
+          <div class="spinner"></div>
+          <span class="btn-text">compute</span>
+        </button>
+        <button class="reset-btn" onclick="resetAll()">reset</button>
+      </div>
+
+      <div class="status-bar" id="statusBar"></div>
+      <div class="error-card" id="errorCard">
+        <div class="error-title" id="errorTitle">Dimension mismatch</div>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <div class="result-section" id="resultSection">
+        <div class="result-card">
+          <div class="result-header">
+            <div>
+              <div class="result-title">Result</div>
+              <div class="result-op" id="resultOp"></div>
+            </div>
+            <div class="result-actions">
+              <button class="export-btn" id="copyBtn" onclick="copyResult()">
+                copy
+              </button>
+              <button class="export-btn" onclick="downloadJSON()">json</button>
+              <button class="export-btn" onclick="downloadText()">text</button>
+            </div>
+          </div>
+          <div class="hint-box" id="hoverHint" style="display: none">
+            hover a result cell to highlight source rows/cols
+          </div>
+          <div class="result-body">
+            <div class="result-matrix-wrap">
+              <div class="result-matrix">
+                <div class="result-grid" id="resultGrid"></div>
+              </div>
+              <div
+                style="
+                  font-size: 11px;
+                  color: var(--color-text-secondary);
+                  margin-top: 6px;
+                "
+                id="resultDimLabel"
+              ></div>
+            </div>
+            <div class="steps-panel" id="stepsPanel"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-section" id="historySection" style="display: none">
+        <div class="history-header" onclick="toggleHistory()">
+          <span class="history-toggle-label">recent calculations</span>
+          <span class="history-arrow" id="histArrow">▼</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
 </html>

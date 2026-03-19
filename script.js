@@ -1,0 +1,898 @@
+var matrices = { A: [], B: [] };
+var resultMatrix = null;
+var resultScalar = null;
+var calcHistory = [];
+var currentStep = 0;
+var allSteps = [];
+var showAllSteps = false;
+var isDark = false;
+
+function getRows(m) {
+  return parseInt(document.getElementById("rows" + m).value);
+}
+function getCols(m) {
+  return parseInt(document.getElementById("cols" + m).value);
+}
+
+function buildMatrix(m) {
+  var rows = getRows(m),
+    cols = getCols(m);
+  var prev = matrices[m];
+  var data = [];
+  for (var i = 0; i < rows; i++) {
+    data.push([]);
+    for (var j = 0; j < cols; j++) {
+      data[i].push(prev[i] && prev[i][j] !== undefined ? prev[i][j] : "");
+    }
+  }
+  return data;
+}
+
+function rebuildMatrix(m) {
+  matrices[m] = buildMatrix(m);
+  renderMatrix(m);
+  hideResults();
+}
+
+function renderMatrix(m) {
+  var grid = document.getElementById("grid" + m);
+  var rows = getRows(m),
+    cols = getCols(m);
+  grid.style.gridTemplateColumns = "repeat(" + cols + ", 1fr)";
+  grid.innerHTML = "";
+  for (var i = 0; i < rows; i++) {
+    for (var j = 0; j < cols; j++) {
+      var cell = document.createElement("div");
+      cell.className = "cell-wrap";
+      var inp = document.createElement("input");
+      inp.type = "number";
+      inp.className = "matrix-input";
+      inp.placeholder = "0";
+      inp.value = matrices[m][i][j] !== "" ? matrices[m][i][j] : "";
+      inp.dataset.m = m;
+      inp.dataset.i = i;
+      inp.dataset.j = j;
+      inp.addEventListener("focus", onCellFocus);
+      inp.addEventListener("blur", onCellBlur);
+      inp.addEventListener("input", onCellInput);
+      inp.addEventListener("keydown", onCellKeydown);
+      inp.addEventListener("wheel", function (e) {
+        e.preventDefault();
+      });
+      cell.appendChild(inp);
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function onCellFocus(e) {
+  var inp = e.target;
+  var m = inp.dataset.m,
+    i = parseInt(inp.dataset.i),
+    j = parseInt(inp.dataset.j);
+  inp.select();
+  highlightRowCol(m, i, j);
+  document.getElementById("card" + m).classList.add("active");
+}
+
+function onCellBlur(e) {
+  var m = e.target.dataset.m;
+  clearHighlights(m);
+  document.getElementById("card" + m).classList.remove("active");
+}
+
+function onCellInput(e) {
+  var inp = e.target;
+  var m = inp.dataset.m,
+    i = parseInt(inp.dataset.i),
+    j = parseInt(inp.dataset.j);
+  var v = inp.value.trim();
+  matrices[m][i][j] = v === "" ? "" : parseFloat(v);
+  hideResults();
+}
+
+function onCellKeydown(e) {
+  var inp = e.target;
+  var m = inp.dataset.m,
+    i = parseInt(inp.dataset.i),
+    j = parseInt(inp.dataset.j);
+  var rows = getRows(m),
+    cols = getCols(m);
+  var moved = false;
+  if (e.key === "ArrowUp") {
+    i = Math.max(0, i - 1);
+    moved = true;
+  } else if (e.key === "ArrowDown") {
+    i = Math.min(rows - 1, i + 1);
+    moved = true;
+  } else if (e.key === "ArrowLeft") {
+    j = Math.max(0, j - 1);
+    moved = true;
+  } else if (e.key === "ArrowRight") {
+    j = Math.min(cols - 1, j + 1);
+    moved = true;
+  } else if (e.key === "Enter") {
+    i = Math.min(rows - 1, i + 1);
+    moved = true;
+  }
+  if (moved) {
+    e.preventDefault();
+    focusCell(m, i, j);
+  }
+}
+
+function focusCell(m, i, j) {
+  var inputs = document.querySelectorAll("#grid" + m + " .matrix-input");
+  var cols = getCols(m);
+  var idx = i * cols + j;
+  if (inputs[idx]) inputs[idx].focus();
+}
+
+function highlightRowCol(m, row, col) {
+  clearHighlights(m);
+  var inputs = document.querySelectorAll("#grid" + m + " .matrix-input");
+  inputs.forEach(function (inp) {
+    var ii = parseInt(inp.dataset.i),
+      jj = parseInt(inp.dataset.j);
+    if (ii === row && jj !== col) inp.classList.add("row-highlight");
+    if (jj === col && ii !== row) inp.classList.add("col-highlight");
+  });
+}
+
+function clearHighlights(m) {
+  document
+    .querySelectorAll("#grid" + m + " .matrix-input")
+    .forEach(function (inp) {
+      inp.classList.remove("row-highlight", "col-highlight");
+    });
+}
+
+function getMatrixValues(m) {
+  var rows = getRows(m),
+    cols = getCols(m);
+  var data = [];
+  for (var i = 0; i < rows; i++) {
+    data.push([]);
+    for (var j = 0; j < cols; j++) {
+      var v = matrices[m][i][j];
+      data[i].push(v === "" ? 0 : parseFloat(v));
+    }
+  }
+  return data;
+}
+
+function onOpChange() {
+  var op = document.getElementById("opSelect").value;
+  document.getElementById("scalarWrap").style.display =
+    op === "scalar" ? "flex" : "none";
+  document.getElementById("powerWrap").style.display =
+    op === "power" ? "flex" : "none";
+  hideResults();
+  updateWorkspaceLayout(op);
+}
+
+function updateWorkspaceLayout(op) {
+  var hideBOps = ["transpose", "determinant", "inverse", "scalar", "power"];
+  var cardB = document.getElementById("cardB");
+  if (hideBOps.indexOf(op) >= 0) {
+    cardB.style.display = "none";
+    document.getElementById("workspace").style.gridTemplateColumns = "1fr";
+  } else {
+    cardB.style.display = "";
+    document.getElementById("workspace").style.gridTemplateColumns = "";
+  }
+}
+
+function hideResults() {
+  document.getElementById("resultSection").classList.remove("visible");
+  document.getElementById("errorCard").classList.remove("visible");
+  document.getElementById("statusBar").classList.remove("visible");
+}
+
+function showError(title, msg) {
+  document.getElementById("errorTitle").textContent = title;
+  document.getElementById("errorMsg").textContent = msg;
+  document.getElementById("errorCard").classList.add("visible");
+  document.getElementById("resultSection").classList.remove("visible");
+}
+
+function fmtNum(v) {
+  if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+  return parseFloat(v.toFixed(4)).toString();
+}
+
+function setStatus(msg) {
+  var bar = document.getElementById("statusBar");
+  bar.textContent = msg;
+  bar.classList.add("visible");
+}
+
+function compute() {
+  var op = document.getElementById("opSelect").value;
+  var btn = document.getElementById("computeBtn");
+  btn.classList.add("loading");
+  btn.disabled = true;
+  hideResults();
+  setStatus("Setting up computation…");
+  setTimeout(function () {
+    try {
+      doCompute(op);
+    } catch (err) {
+      showError("Computation error", err.message);
+    }
+    btn.classList.remove("loading");
+    btn.disabled = false;
+    document.getElementById("statusBar").classList.remove("visible");
+  }, 300);
+}
+
+function doCompute(op) {
+  var A = getMatrixValues("A");
+  var rowsA = A.length,
+    colsA = A[0].length;
+
+  if (op === "multiply") {
+    var B = getMatrixValues("B");
+    var rowsB = B.length,
+      colsB = B[0].length;
+    if (colsA !== rowsB) {
+      showError(
+        "Dimension mismatch",
+        "A is " +
+          rowsA +
+          "×" +
+          colsA +
+          " and B is " +
+          rowsB +
+          "×" +
+          colsB +
+          ". Columns of A must equal rows of B.",
+      );
+      return;
+    }
+    setStatus("Multiplying A × B…");
+    var C = [],
+      steps = [];
+    for (var i = 0; i < rowsA; i++) {
+      C.push([]);
+      for (var j = 0; j < colsB; j++) {
+        var sum = 0,
+          terms = [];
+        for (var k = 0; k < colsA; k++) {
+          sum += A[i][k] * B[k][j];
+          terms.push([A[i][k], B[k][j]]);
+        }
+        C[i].push(sum);
+        steps.push({
+          cell: "(" + i + "," + j + ")",
+          row: i,
+          col: j,
+          terms: terms,
+          result: sum,
+        });
+      }
+    }
+    displayResult(C, "A × B", steps, A, B, rowsA, colsB, "multiply");
+  } else if (op === "add" || op === "subtract") {
+    var B = getMatrixValues("B");
+    if (rowsA !== B.length || colsA !== B[0].length) {
+      showError(
+        "Dimension mismatch",
+        "Both matrices must have same dimensions. A is " +
+          rowsA +
+          "×" +
+          colsA +
+          ", B is " +
+          B.length +
+          "×" +
+          B[0].length +
+          ".",
+      );
+      return;
+    }
+    var sym = op === "add" ? "+" : "−";
+    var C = [],
+      steps = [];
+    for (var i = 0; i < rowsA; i++) {
+      C.push([]);
+      for (var j = 0; j < colsA; j++) {
+        var v = op === "add" ? A[i][j] + B[i][j] : A[i][j] - B[i][j];
+        C[i].push(v);
+        steps.push({
+          cell: "(" + i + "," + j + ")",
+          row: i,
+          col: j,
+          a: A[i][j],
+          b: B[i][j],
+          sym: sym,
+          result: v,
+          type: "elementwise",
+        });
+      }
+    }
+    displayResult(C, "A " + sym + " B", steps, A, B, rowsA, colsA, op);
+  } else if (op === "transpose") {
+    setStatus("Transposing A…");
+    var C = [];
+    for (var j = 0; j < colsA; j++) {
+      C.push([]);
+      for (var i = 0; i < rowsA; i++) C[j].push(A[i][j]);
+    }
+    displayResult(C, "Aᵀ", [], A, null, colsA, rowsA, "transpose");
+  } else if (op === "determinant") {
+    if (rowsA !== colsA) {
+      showError(
+        "Not square",
+        "Determinant requires a square matrix. A is " +
+          rowsA +
+          "×" +
+          colsA +
+          ".",
+      );
+      return;
+    }
+    setStatus("Computing det(A)…");
+    var det = determinant(A);
+    resultScalar = det;
+    displayScalarResult(det, "det(A)");
+  } else if (op === "inverse") {
+    if (rowsA !== colsA) {
+      showError("Not square", "Inverse requires a square matrix.");
+      return;
+    }
+    var det = determinant(A);
+    if (Math.abs(det) < 1e-10) {
+      showError(
+        "Singular matrix",
+        "det(A) = 0. This matrix is singular and has no inverse.",
+      );
+      return;
+    }
+    setStatus("Inverting A…");
+    var C = inverse(A);
+    displayResult(C, "A⁻¹", [], A, null, rowsA, colsA, "inverse");
+  } else if (op === "scalar") {
+    var k = parseFloat(document.getElementById("scalarK").value) || 1;
+    setStatus("Scaling A by " + k + "…");
+    var C = A.map(function (row) {
+      return row.map(function (v) {
+        return k * v;
+      });
+    });
+    var steps = [];
+    A.forEach(function (row, i) {
+      row.forEach(function (v, j) {
+        steps.push({
+          cell: "(" + i + "," + j + ")",
+          row: i,
+          col: j,
+          k: k,
+          a: v,
+          result: k * v,
+          type: "scalar",
+        });
+      });
+    });
+    displayResult(C, k + " × A", steps, A, null, rowsA, colsA, "scalar");
+  } else if (op === "power") {
+    if (rowsA !== colsA) {
+      showError("Not square", "Matrix power requires a square matrix.");
+      return;
+    }
+    var n = parseInt(document.getElementById("powerN").value);
+    if (isNaN(n) || n < 0) {
+      showError("Invalid exponent", "n must be a non-negative integer.");
+      return;
+    }
+    setStatus("Computing Aⁿ…");
+    var C = matPow(A, n);
+    displayResult(C, "A^" + n, [], A, null, rowsA, colsA, "power");
+  }
+}
+
+function determinant(m) {
+  var n = m.length;
+  if (n === 1) return m[0][0];
+  if (n === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+  var det = 0;
+  for (var j = 0; j < n; j++) {
+    var sub = m.slice(1).map(function (row) {
+      return row.filter(function (_, jj) {
+        return jj !== j;
+      });
+    });
+    det += (j % 2 === 0 ? 1 : -1) * m[0][j] * determinant(sub);
+  }
+  return det;
+}
+
+function inverse(m) {
+  var n = m.length;
+  var aug = m.map(function (row, i) {
+    return row.concat(
+      Array.from({ length: n }, function (_, j) {
+        return i === j ? 1 : 0;
+      }),
+    );
+  });
+  for (var col = 0; col < n; col++) {
+    var pivot = -1,
+      best = 0;
+    for (var row = col; row < n; row++) {
+      if (Math.abs(aug[row][col]) > best) {
+        best = Math.abs(aug[row][col]);
+        pivot = row;
+      }
+    }
+    if (pivot < 0) throw new Error("Matrix is singular");
+    var tmp = aug[col];
+    aug[col] = aug[pivot];
+    aug[pivot] = tmp;
+    var scale = aug[col][col];
+    aug[col] = aug[col].map(function (v) {
+      return v / scale;
+    });
+    for (var row = 0; row < n; row++) {
+      if (row !== col) {
+        var f = aug[row][col];
+        aug[row] = aug[row].map(function (v, jj) {
+          return v - f * aug[col][jj];
+        });
+      }
+    }
+  }
+  return aug.map(function (row) {
+    return row.slice(n);
+  });
+}
+
+function matMul(A, B) {
+  var r = A.length,
+    c = B[0].length,
+    k = B.length;
+  return Array.from({ length: r }, function (_, i) {
+    return Array.from({ length: c }, function (_, j) {
+      var s = 0;
+      for (var l = 0; l < k; l++) s += A[i][l] * B[l][j];
+      return s;
+    });
+  });
+}
+
+function matPow(A, n) {
+  var sz = A.length;
+  var R = Array.from({ length: sz }, function (_, i) {
+    return Array.from({ length: sz }, function (_, j) {
+      return i === j ? 1 : 0;
+    });
+  });
+  var base = A.map(function (r) {
+    return r.slice();
+  });
+  while (n > 0) {
+    if (n % 2 === 1) R = matMul(R, base);
+    base = matMul(base, base);
+    n = Math.floor(n / 2);
+  }
+  return R;
+}
+
+function displayScalarResult(val, label) {
+  resultMatrix = null;
+  var panel = document.getElementById("stepsPanel");
+  panel.innerHTML =
+    '<div class="step-block"><div class="step-cell-label">result</div><div class="step-formula"><span class="result">' +
+    fmtNum(val) +
+    "</span></div></div>";
+  var rg = document.getElementById("resultGrid");
+  rg.style.gridTemplateColumns = "1fr";
+  rg.innerHTML =
+    '<div class="result-cell" style="min-width:80px;">' +
+    fmtNum(val) +
+    "</div>";
+  document.getElementById("resultOp").textContent = label;
+  document.getElementById("resultDimLabel").textContent = "scalar";
+  document.getElementById("hoverHint").style.display = "none";
+  document.getElementById("resultSection").classList.add("visible");
+  addHistory(label, [[val]], true);
+}
+
+function displayResult(C, label, steps, A, B, rows, cols, op) {
+  resultMatrix = C;
+  allSteps = steps;
+  currentStep = 0;
+
+  var rg = document.getElementById("resultGrid");
+  rg.style.gridTemplateColumns = "repeat(" + cols + ", 1fr)";
+  rg.innerHTML = "";
+
+  C.forEach(function (row, i) {
+    row.forEach(function (val, j) {
+      var cell = document.createElement("div");
+      cell.className = "result-cell";
+      cell.textContent = fmtNum(val);
+      cell.dataset.i = i;
+      cell.dataset.j = j;
+      cell.addEventListener("mouseenter", function () {
+        cell.classList.add("active");
+        onResultHover(i, j, op, A, B);
+      });
+      cell.addEventListener("mouseleave", function () {
+        cell.classList.remove("active");
+        onResultLeave(op);
+      });
+      rg.appendChild(cell);
+    });
+  });
+
+  document.getElementById("resultOp").textContent = label;
+  document.getElementById("resultDimLabel").textContent = rows + "×" + cols;
+  var hasHover = op === "multiply" || op === "add" || op === "subtract";
+  document.getElementById("hoverHint").style.display =
+    hasHover && C.length > 0 ? "block" : "none";
+  renderSteps(op, A, B);
+  document.getElementById("resultSection").classList.add("visible");
+  addHistory(label, C, false);
+}
+
+function onResultHover(i, j, op, A, B) {
+  if (op === "multiply" && A && B) {
+    clearHighlights("A");
+    clearHighlights("B");
+    document.querySelectorAll("#gridA .matrix-input").forEach(function (inp) {
+      if (parseInt(inp.dataset.i) === i) inp.classList.add("row-highlight");
+    });
+    document.querySelectorAll("#gridB .matrix-input").forEach(function (inp) {
+      if (parseInt(inp.dataset.j) === j) inp.classList.add("col-highlight");
+    });
+  }
+  if ((op === "add" || op === "subtract") && A && B) {
+    document
+      .querySelectorAll("#gridA .matrix-input, #gridB .matrix-input")
+      .forEach(function (inp) {
+        if (parseInt(inp.dataset.i) === i && parseInt(inp.dataset.j) === j)
+          inp.classList.add("row-highlight");
+      });
+  }
+  if (allSteps.length > 0) {
+    var stepIdx = allSteps.findIndex(function (s) {
+      return s.row === i && s.col === j;
+    });
+    if (stepIdx >= 0) {
+      currentStep = stepIdx;
+      renderCurrentStep();
+    }
+  }
+}
+
+function onResultLeave(op) {
+  clearHighlights("A");
+  clearHighlights("B");
+}
+
+function renderSteps(op, A, B) {
+  if (allSteps.length === 0) {
+    document.getElementById("stepsPanel").innerHTML =
+      '<div class="hint-box">hover result cells to explore</div>';
+    return;
+  }
+  renderCurrentStep();
+}
+
+function renderCurrentStep() {
+  var panel = document.getElementById("stepsPanel");
+  var step = allSteps[currentStep];
+  if (!step) {
+    panel.innerHTML = "";
+    return;
+  }
+
+  var html =
+    '<div class="steps-header"><span class="steps-title">step-by-step</span>' +
+    '<div class="steps-nav">' +
+    '<button class="step-nav-btn" onclick="prevStep()" ' +
+    (currentStep <= 0 ? "disabled" : "") +
+    ">&#8249;</button>" +
+    '<span class="step-counter">' +
+    (currentStep + 1) +
+    " / " +
+    allSteps.length +
+    "</span>" +
+    '<button class="step-nav-btn" onclick="nextStep()" ' +
+    (currentStep >= allSteps.length - 1 ? "disabled" : "") +
+    ">&#8250;</button>" +
+    "</div></div>";
+
+  html +=
+    '<div class="step-block"><div class="step-cell-label">cell ' +
+    step.cell +
+    '</div><div class="step-formula">';
+
+  if (step.terms) {
+    var exprParts = step.terms.map(function (t) {
+      return (
+        '<span class="term-a">' +
+        fmtNum(t[0]) +
+        '</span><span class="op">&times;</span><span class="term-b">' +
+        fmtNum(t[1]) +
+        "</span>"
+      );
+    });
+    html += exprParts.join('<span class="op"> + </span>');
+    html +=
+      '<br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  } else if (step.type === "elementwise") {
+    html +=
+      '<span class="term-a">' +
+      fmtNum(step.a) +
+      '</span><span class="op"> ' +
+      step.sym +
+      ' </span><span class="term-b">' +
+      fmtNum(step.b) +
+      '</span><br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  } else if (step.type === "scalar") {
+    html +=
+      '<span class="term-b">' +
+      fmtNum(step.k) +
+      '</span><span class="op"> &times; </span><span class="term-a">' +
+      fmtNum(step.a) +
+      '</span><br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  }
+
+  html += "</div></div>";
+  panel.innerHTML = html;
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    renderCurrentStep();
+    scrollResultCell();
+  }
+}
+function nextStep() {
+  if (currentStep < allSteps.length - 1) {
+    currentStep++;
+    renderCurrentStep();
+    scrollResultCell();
+  }
+}
+
+function scrollResultCell() {
+  var step = allSteps[currentStep];
+  if (!step) return;
+  document.querySelectorAll(".result-cell").forEach(function (cell) {
+    cell.classList.remove("active");
+    if (
+      parseInt(cell.dataset.i) === step.row &&
+      parseInt(cell.dataset.j) === step.col
+    )
+      cell.classList.add("active");
+  });
+  clearHighlights("A");
+  clearHighlights("B");
+  document.querySelectorAll("#gridA .matrix-input").forEach(function (inp) {
+    if (parseInt(inp.dataset.i) === step.row)
+      inp.classList.add("row-highlight");
+  });
+  document.querySelectorAll("#gridB .matrix-input").forEach(function (inp) {
+    if (parseInt(inp.dataset.j) === step.col)
+      inp.classList.add("col-highlight");
+  });
+}
+
+function randomFill(m) {
+  var rows = getRows(m),
+    cols = getCols(m);
+  matrices[m] = Array.from({ length: rows }, function () {
+    return Array.from({ length: cols }, function () {
+      return Math.floor(Math.random() * 9) + 1;
+    });
+  });
+  renderMatrix(m);
+  hideResults();
+}
+
+function identityFill(m) {
+  var n = Math.min(getRows(m), getCols(m));
+  matrices[m] = Array.from({ length: getRows(m) }, function (_, i) {
+    return Array.from({ length: getCols(m) }, function (_, j) {
+      return i === j && i < n ? 1 : 0;
+    });
+  });
+  renderMatrix(m);
+  hideResults();
+}
+
+function clearMatrix(m) {
+  var rows = getRows(m),
+    cols = getCols(m);
+  matrices[m] = Array.from({ length: rows }, function () {
+    return Array.from({ length: cols }, function () {
+      return "";
+    });
+  });
+  renderMatrix(m);
+  hideResults();
+}
+
+function resetAll() {
+  clearMatrix("A");
+  clearMatrix("B");
+  document.getElementById("opSelect").value = "multiply";
+  onOpChange();
+  hideResults();
+}
+
+function addHistory(label, mat, isScalar) {
+  var preview = isScalar
+    ? fmtNum(mat[0][0])
+    : mat
+        .map(function (r) {
+          return "[" + r.map(fmtNum).join(", ") + "]";
+        })
+        .join("; ");
+  var now = new Date();
+  var time =
+    now.getHours() +
+    ":" +
+    (now.getMinutes() < 10 ? "0" : "") +
+    now.getMinutes();
+  calcHistory.unshift({
+    label: label,
+    preview: preview,
+    time: time,
+    mat: mat.map(function (r) {
+      return r.slice();
+    }),
+    isScalar: isScalar,
+  });
+  if (calcHistory.length > 8) calcHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  var sec = document.getElementById("historySection");
+  var list = document.getElementById("historyList");
+  if (calcHistory.length === 0) {
+    sec.style.display = "none";
+    return;
+  }
+  sec.style.display = "block";
+  list.innerHTML = calcHistory
+    .map(function (h, idx) {
+      return (
+        '<div class="history-item" onclick="loadHistory(' +
+        idx +
+        ')">' +
+        '<span class="history-op">' +
+        h.label +
+        "</span>" +
+        '<span class="history-preview">' +
+        h.preview +
+        "</span>" +
+        '<span class="history-time">' +
+        h.time +
+        "</span>" +
+        "</div>"
+      );
+    })
+    .join("");
+}
+
+function loadHistory(idx) {
+  var h = calcHistory[idx];
+  var text = h.isScalar
+    ? h.label + " = " + fmtNum(h.mat[0][0])
+    : h.label +
+      "\n" +
+      h.mat
+        .map(function (r) {
+          return r.map(fmtNum).join("\t");
+        })
+        .join("\n");
+  alert(text);
+}
+
+function toggleHistory() {
+  var list = document.getElementById("historyList");
+  var arrow = document.getElementById("histArrow");
+  list.classList.toggle("open");
+  arrow.classList.toggle("open");
+}
+
+function copyResult() {
+  if (!resultMatrix) return;
+  var text = resultMatrix
+    .map(function (r) {
+      return r.map(fmtNum).join("\t");
+    })
+    .join("\n");
+  navigator.clipboard.writeText(text).then(function () {
+    var b = document.getElementById("copyBtn");
+    var orig = b.textContent;
+    b.textContent = "copied!";
+    setTimeout(function () {
+      b.textContent = orig;
+    }, 1500);
+  });
+}
+
+function downloadJSON() {
+  if (!resultMatrix) return;
+  var blob = new Blob([JSON.stringify({ result: resultMatrix }, null, 2)], {
+    type: "application/json",
+  });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "matrix_result.json";
+  a.click();
+}
+
+function downloadText() {
+  if (!resultMatrix) return;
+  var text = resultMatrix
+    .map(function (r) {
+      return r.map(fmtNum).join("\t");
+    })
+    .join("\n");
+  var blob = new Blob([text], { type: "text/plain" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "matrix_result.txt";
+  a.click();
+}
+
+function toggleDark() {
+  isDark = !isDark;
+  document.body.setAttribute("data-dark", isDark ? "true" : "false");
+  document.getElementById("darkToggle").textContent = isDark
+    ? "light mode"
+    : "dark mode";
+  try {
+    localStorage.setItem("mc_dark", isDark ? "1" : "0");
+  } catch (e) {}
+}
+
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.target.matches(".matrix-input,select,button")) {
+    compute();
+  }
+  if (
+    e.key.toLowerCase() === "r" &&
+    !e.target.matches("input,select,textarea")
+  ) {
+    resetAll();
+  }
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    e.key === "c" &&
+    !e.target.matches(".matrix-input")
+  ) {
+    copyResult();
+  }
+});
+
+matrices.A = Array.from({ length: 2 }, function () {
+  return Array.from({ length: 2 }, function () {
+    return "";
+  });
+});
+matrices.B = Array.from({ length: 2 }, function () {
+  return Array.from({ length: 2 }, function () {
+    return "";
+  });
+});
+renderMatrix("A");
+renderMatrix("B");
+onOpChange();
+
+try {
+  if (localStorage.getItem("mc_dark") === "1") toggleDark();
+} catch (e) {}
