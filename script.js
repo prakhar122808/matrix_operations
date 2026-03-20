@@ -10,6 +10,7 @@ var isDark = false;
 function getRows(m) {
   return parseInt(document.getElementById("rows" + m).value);
 }
+
 function getCols(m) {
   return parseInt(document.getElementById("cols" + m).value);
 }
@@ -38,7 +39,7 @@ function renderMatrix(m) {
   var grid = document.getElementById("grid" + m);
   var rows = getRows(m),
     cols = getCols(m);
-  grid.style.gridTemplateColumns = "repeat(" + cols + ", 1fr)";
+  grid.style.gridTemplateColumns = "repeat(" + cols + ", minmax(56px, 56px))";
   grid.innerHTML = "";
   for (var i = 0; i < rows; i++) {
     for (var j = 0; j < cols; j++) {
@@ -100,23 +101,27 @@ function onCellKeydown(e) {
     cols = getCols(m);
   var moved = false;
   if (e.key === "ArrowUp") {
+    e.preventDefault();
     i = Math.max(0, i - 1);
     moved = true;
   } else if (e.key === "ArrowDown") {
+    e.preventDefault();
     i = Math.min(rows - 1, i + 1);
     moved = true;
   } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
     j = Math.max(0, j - 1);
     moved = true;
   } else if (e.key === "ArrowRight") {
+    e.preventDefault();
     j = Math.min(cols - 1, j + 1);
     moved = true;
   } else if (e.key === "Enter") {
+    e.preventDefault();
     i = Math.min(rows - 1, i + 1);
     moved = true;
   }
   if (moved) {
-    e.preventDefault();
     focusCell(m, i, j);
   }
 }
@@ -213,7 +218,7 @@ function compute() {
   btn.classList.add("loading");
   btn.disabled = true;
   hideResults();
-  setStatus("Setting up computation…");
+  setStatus("Computing…");
   setTimeout(function () {
     try {
       doCompute(op);
@@ -223,7 +228,7 @@ function compute() {
     btn.classList.remove("loading");
     btn.disabled = false;
     document.getElementById("statusBar").classList.remove("visible");
-  }, 300);
+  }, 250);
 }
 
 function doCompute(op) {
@@ -250,7 +255,6 @@ function doCompute(op) {
       );
       return;
     }
-    setStatus("Multiplying A × B…");
     var C = [],
       steps = [];
     for (var i = 0; i < rowsA; i++) {
@@ -312,287 +316,287 @@ function doCompute(op) {
     }
     displayResult(C, "A " + sym + " B", steps, A, B, rowsA, colsA, op);
   } else if (op === "transpose") {
-    setStatus("Transposing A…");
     var C = [];
-    for (var j = 0; j < colsA; j++) {
+    for (var i = 0; i < colsA; i++) {
       C.push([]);
-      for (var i = 0; i < rowsA; i++) C[j].push(A[i][j]);
+      for (var j = 0; j < rowsA; j++) {
+        C[i].push(A[j][i]);
+      }
     }
     displayResult(C, "Aᵀ", [], A, null, colsA, rowsA, "transpose");
   } else if (op === "determinant") {
+    var d = determinant(A);
     if (rowsA !== colsA) {
-      showError(
-        "Not square",
-        "Determinant requires a square matrix. A is " +
-          rowsA +
-          "×" +
-          colsA +
-          ".",
-      );
+      showError("Not a square matrix", "Determinant only defined for square matrices.");
       return;
     }
-    setStatus("Computing det(A)…");
-    var det = determinant(A);
-    resultScalar = det;
-    displayScalarResult(det, "det(A)");
+    resultMatrix = [[d]];
+    resultScalar = d;
+    displayScalarResult(d, "det(A) = " + fmtNum(d));
+    addHistory("det(A)", [[d]], true);
   } else if (op === "inverse") {
     if (rowsA !== colsA) {
-      showError("Not square", "Inverse requires a square matrix.");
+      showError("Not a square matrix", "Inverse only defined for square matrices.");
       return;
     }
-    var det = determinant(A);
-    if (Math.abs(det) < 1e-10) {
-      showError(
-        "Singular matrix",
-        "det(A) = 0. This matrix is singular and has no inverse.",
-      );
+    var d = determinant(A);
+    if (Math.abs(d) < 1e-10) {
+      showError("Singular matrix", "Determinant is zero. Matrix is not invertible.");
       return;
     }
-    setStatus("Inverting A…");
     var C = inverse(A);
     displayResult(C, "A⁻¹", [], A, null, rowsA, colsA, "inverse");
   } else if (op === "scalar") {
-    var k = parseFloat(document.getElementById("scalarK").value) || 1;
-    setStatus("Scaling A by " + k + "…");
-    var C = A.map(function (row) {
-      return row.map(function (v) {
-        return k * v;
-      });
-    });
+    var k = parseFloat(document.getElementById("scalarK").value);
+    var C = [];
     var steps = [];
-    A.forEach(function (row, i) {
-      row.forEach(function (v, j) {
+    for (var i = 0; i < rowsA; i++) {
+      C.push([]);
+      for (var j = 0; j < colsA; j++) {
+        var v = k * A[i][j];
+        C[i].push(v);
         steps.push({
           cell: "(" + i + "," + j + ")",
           row: i,
           col: j,
           k: k,
-          a: v,
-          result: k * v,
+          a: A[i][j],
+          result: v,
           type: "scalar",
         });
-      });
-    });
+      }
+    }
     displayResult(C, k + " × A", steps, A, null, rowsA, colsA, "scalar");
   } else if (op === "power") {
-    if (rowsA !== colsA) {
-      showError("Not square", "Matrix power requires a square matrix.");
-      return;
-    }
     var n = parseInt(document.getElementById("powerN").value);
-    if (isNaN(n) || n < 0) {
-      showError("Invalid exponent", "n must be a non-negative integer.");
+    if (rowsA !== colsA) {
+      showError("Not a square matrix", "Power only defined for square matrices.");
       return;
     }
-    setStatus("Computing Aⁿ…");
-    var C = matPow(A, n);
-    displayResult(C, "A^" + n, [], A, null, rowsA, colsA, "power");
+    if (n < 0) {
+      showError("Invalid exponent", "Exponent must be non-negative.");
+      return;
+    }
+    var C = matrixPower(A, n);
+    displayResult(C, "A" + (n === 1 ? "" : "^" + n), [], A, null, rowsA, colsA, "power");
   }
 }
 
-function determinant(m) {
-  var n = m.length;
-  if (n === 1) return m[0][0];
-  if (n === 2) return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+function determinant(A) {
+  var n = A.length;
+  if (n !== A[0].length) throw new Error("Matrix must be square");
+  if (n === 1) return A[0][0];
+  if (n === 2) return A[0][0] * A[1][1] - A[0][1] * A[1][0];
   var det = 0;
   for (var j = 0; j < n; j++) {
-    var sub = m.slice(1).map(function (row) {
-      return row.filter(function (_, jj) {
-        return jj !== j;
-      });
-    });
-    det += (j % 2 === 0 ? 1 : -1) * m[0][j] * determinant(sub);
+    det += Math.pow(-1, j) * A[0][j] * determinant(minor(A, 0, j));
   }
   return det;
 }
 
-function inverse(m) {
-  var n = m.length;
-  var aug = m.map(function (row, i) {
-    return row.concat(
-      Array.from({ length: n }, function (_, j) {
-        return i === j ? 1 : 0;
-      }),
-    );
-  });
-  for (var col = 0; col < n; col++) {
-    var pivot = -1,
-      best = 0;
-    for (var row = col; row < n; row++) {
-      if (Math.abs(aug[row][col]) > best) {
-        best = Math.abs(aug[row][col]);
-        pivot = row;
-      }
-    }
-    if (pivot < 0) throw new Error("Matrix is singular");
-    var tmp = aug[col];
-    aug[col] = aug[pivot];
-    aug[pivot] = tmp;
-    var scale = aug[col][col];
-    aug[col] = aug[col].map(function (v) {
-      return v / scale;
+function minor(A, row, col) {
+  return A.filter(function (_, i) {
+    return i !== row;
+  }).map(function (r) {
+    return r.filter(function (_, j) {
+      return j !== col;
     });
-    for (var row = 0; row < n; row++) {
-      if (row !== col) {
-        var f = aug[row][col];
-        aug[row] = aug[row].map(function (v, jj) {
-          return v - f * aug[col][jj];
-        });
-      }
+  });
+}
+
+function inverse(A) {
+  var n = A.length;
+  var d = determinant(A);
+  if (Math.abs(d) < 1e-10) throw new Error("Matrix is singular");
+  var adj = adjugate(A);
+  return adj.map(function (row) {
+    return row.map(function (v) {
+      return v / d;
+    });
+  });
+}
+
+function adjugate(A) {
+  var n = A.length;
+  var cof = [];
+  for (var i = 0; i < n; i++) {
+    cof[i] = [];
+    for (var j = 0; j < n; j++) {
+      cof[i][j] =
+        Math.pow(-1, i + j) * determinant(minor(A, i, j));
     }
   }
-  return aug.map(function (row) {
-    return row.slice(n);
-  });
+  return transpose(cof);
 }
 
-function matMul(A, B) {
-  var r = A.length,
-    c = B[0].length,
-    k = B.length;
-  return Array.from({ length: r }, function (_, i) {
-    return Array.from({ length: c }, function (_, j) {
-      var s = 0;
-      for (var l = 0; l < k; l++) s += A[i][l] * B[l][j];
-      return s;
-    });
-  });
-}
-
-function matPow(A, n) {
-  var sz = A.length;
-  var R = Array.from({ length: sz }, function (_, i) {
-    return Array.from({ length: sz }, function (_, j) {
-      return i === j ? 1 : 0;
-    });
-  });
-  var base = A.map(function (r) {
-    return r.slice();
-  });
-  while (n > 0) {
-    if (n % 2 === 1) R = matMul(R, base);
-    base = matMul(base, base);
-    n = Math.floor(n / 2);
+function transpose(A) {
+  var n = A.length,
+    m = A[0].length;
+  var C = [];
+  for (var i = 0; i < m; i++) {
+    C[i] = [];
+    for (var j = 0; j < n; j++) {
+      C[i][j] = A[j][i];
+    }
   }
-  return R;
+  return C;
 }
 
-function displayScalarResult(val, label) {
-  resultMatrix = null;
-  var panel = document.getElementById("stepsPanel");
-  panel.innerHTML =
-    '<div class="step-block"><div class="step-cell-label">result</div><div class="step-formula"><span class="result">' +
-    fmtNum(val) +
-    "</span></div></div>";
-  var rg = document.getElementById("resultGrid");
-  rg.style.gridTemplateColumns = "1fr";
-  rg.innerHTML =
-    '<div class="result-cell" style="min-width:80px;">' +
-    fmtNum(val) +
-    "</div>";
-  document.getElementById("resultOp").textContent = label;
-  document.getElementById("resultDimLabel").textContent = "scalar";
-  document.getElementById("hoverHint").style.display = "none";
-  document.getElementById("resultSection").classList.add("visible");
-  addHistory(label, [[val]], true);
+function matrixPower(A, n) {
+  if (n === 0) {
+    var m = A.length;
+    var I = [];
+    for (var i = 0; i < m; i++) {
+      I[i] = [];
+      for (var j = 0; j < m; j++) {
+        I[i][j] = i === j ? 1 : 0;
+      }
+    }
+    return I;
+  }
+  var result = A.map(function (row) {
+    return row.slice();
+  });
+  for (var i = 1; i < n; i++) {
+    result = multiply(result, A);
+  }
+  return result;
 }
 
-function displayResult(C, label, steps, A, B, rows, cols, op) {
+function multiply(A, B) {
+  var rowsA = A.length,
+    colsA = A[0].length;
+  var colsB = B[0].length;
+  var C = [];
+  for (var i = 0; i < rowsA; i++) {
+    C[i] = [];
+    for (var j = 0; j < colsB; j++) {
+      var sum = 0;
+      for (var k = 0; k < colsA; k++) {
+        sum += A[i][k] * B[k][j];
+      }
+      C[i][j] = sum;
+    }
+  }
+  return C;
+}
+
+function displayResult(C, opLabel, steps, A, B, outRows, outCols, op) {
   resultMatrix = C;
+  resultScalar = null;
   allSteps = steps;
   currentStep = 0;
 
-  var rg = document.getElementById("resultGrid");
-  rg.style.gridTemplateColumns = "repeat(" + cols + ", 1fr)";
-  rg.innerHTML = "";
-
-  C.forEach(function (row, i) {
-    row.forEach(function (val, j) {
+  var grid = document.getElementById("resultGrid");
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = "repeat(" + outCols + ", 1fr)";
+  
+  for (var i = 0; i < outRows; i++) {
+    for (var j = 0; j < outCols; j++) {
+      var v = C[i][j];
       var cell = document.createElement("div");
       cell.className = "result-cell";
-      cell.textContent = fmtNum(val);
       cell.dataset.i = i;
       cell.dataset.j = j;
-      cell.addEventListener("mouseenter", function () {
-        cell.classList.add("active");
-        onResultHover(i, j, op, A, B);
-      });
-      cell.addEventListener("mouseleave", function () {
-        cell.classList.remove("active");
-        onResultLeave(op);
-      });
-      rg.appendChild(cell);
-    });
-  });
-
-  document.getElementById("resultOp").textContent = label;
-  document.getElementById("resultDimLabel").textContent = rows + "×" + cols;
-  var hasHover = op === "multiply" || op === "add" || op === "subtract";
-  document.getElementById("hoverHint").style.display =
-    hasHover && C.length > 0 ? "block" : "none";
-  renderSteps(op, A, B);
-  document.getElementById("resultSection").classList.add("visible");
-  addHistory(label, C, false);
-}
-
-function onResultHover(i, j, op, A, B) {
-  if (op === "multiply" && A && B) {
-    clearHighlights("A");
-    clearHighlights("B");
-    document.querySelectorAll("#gridA .matrix-input").forEach(function (inp) {
-      if (parseInt(inp.dataset.i) === i) inp.classList.add("row-highlight");
-    });
-    document.querySelectorAll("#gridB .matrix-input").forEach(function (inp) {
-      if (parseInt(inp.dataset.j) === j) inp.classList.add("col-highlight");
-    });
-  }
-  if ((op === "add" || op === "subtract") && A && B) {
-    document
-      .querySelectorAll("#gridA .matrix-input, #gridB .matrix-input")
-      .forEach(function (inp) {
-        if (parseInt(inp.dataset.i) === i && parseInt(inp.dataset.j) === j)
-          inp.classList.add("row-highlight");
-      });
-  }
-  if (allSteps.length > 0) {
-    var stepIdx = allSteps.findIndex(function (s) {
-      return s.row === i && s.col === j;
-    });
-    if (stepIdx >= 0) {
-      currentStep = stepIdx;
-      renderCurrentStep();
+      cell.textContent = fmtNum(v);
+      cell.onmouseover = function (e) {
+        updateSourceHighlights(
+          parseInt(e.target.dataset.i),
+          parseInt(e.target.dataset.j),
+          A,
+          B,
+          op,
+        );
+      };
+      cell.onmouseout = function () {
+        clearSourceHighlights();
+        currentStep = 0;
+        renderCurrentStep();
+      };
+      grid.appendChild(cell);
     }
   }
-}
 
-function onResultLeave(op) {
-  clearHighlights("A");
-  clearHighlights("B");
-}
+  document.getElementById("resultOp").textContent = opLabel;
+  document.getElementById("resultDimLabel").textContent = outRows + " × " + outCols;
 
-function renderSteps(op, A, B) {
-  if (allSteps.length === 0) {
-    document.getElementById("stepsPanel").innerHTML =
-      '<div class="hint-box">hover result cells to explore</div>';
-    return;
+  if (steps.length > 0) {
+    document.getElementById("hoverHint").style.display = "block";
+    renderCurrentStep();
+  } else {
+    document.getElementById("stepsPanel").innerHTML = '';
+    document.getElementById("hoverHint").style.display = "none";
   }
-  renderCurrentStep();
+
+  document.getElementById("resultSection").classList.add("visible");
+  addHistory(opLabel, C, false);
 }
 
-function renderCurrentStep() {
-  var panel = document.getElementById("stepsPanel");
+function displayScalarResult(val, text) {
+  var grid = document.getElementById("resultGrid");
+  grid.innerHTML = '';
+  grid.style.gridTemplateColumns = "1fr";
+  var cell = document.createElement("div");
+  cell.className = "result-cell";
+  cell.textContent = fmtNum(val);
+  grid.appendChild(cell);
+
+  document.getElementById("resultOp").textContent = text;
+  document.getElementById("resultDimLabel").textContent = "1 × 1";
+  document.getElementById("stepsPanel").innerHTML = '';
+  document.getElementById("hoverHint").style.display = "none";
+  document.getElementById("resultSection").classList.add("visible");
+}
+
+function updateSourceHighlights(i, j, A, B, op) {
+  clearSourceHighlights();
+  document.querySelectorAll(".result-cell").forEach(function (cell) {
+    cell.classList.remove("active");
+  });
+  document.querySelectorAll(".result-cell").forEach(function (cell) {
+    if (parseInt(cell.dataset.i) === i && parseInt(cell.dataset.j) === j) {
+      cell.classList.add("active");
+    }
+  });
+
+  // Find the step for this cell and display it
+  var stepIndex = -1;
+  for (var k = 0; k < allSteps.length; k++) {
+    if (allSteps[k].row === i && allSteps[k].col === j) {
+      stepIndex = k;
+      break;
+    }
+  }
+
+  if (stepIndex !== -1) {
+    currentStep = stepIndex;
+    renderStepForCell(i, j, A, B, op);
+  }
+
+  if (op === "multiply") {
+    highlightRowCol("A", i, -1);
+    highlightRowCol("B", -1, j);
+  } else if (op === "add" || op === "subtract" || op === "scalar") {
+    highlightRowCol("A", i, j);
+    highlightRowCol("B", i, j);
+  } else if (op === "transpose") {
+    highlightRowCol("A", j, i);
+  }
+}
+
+function renderStepForCell(i, j, A, B, op) {
   var step = allSteps[currentStep];
-  if (!step) {
-    panel.innerHTML = "";
-    return;
-  }
+  if (!step) return;
 
+  var panel = document.getElementById("stepsPanel");
+  var panelLabel = allSteps.length === 1 ? "Step" : "Steps";
   var html =
-    '<div class="steps-header"><span class="steps-title">step-by-step</span>' +
+    '<div class="steps-header">' +
+    '<span class="steps-title">' + panelLabel + ' (' + allSteps.length + ')</span>' +
     '<div class="steps-nav">' +
     '<button class="step-nav-btn" onclick="prevStep()" ' +
     (currentStep <= 0 ? "disabled" : "") +
-    ">&#8249;</button>" +
+    ">&lsaquo;</button>" +
     '<span class="step-counter">' +
     (currentStep + 1) +
     " / " +
@@ -600,7 +604,7 @@ function renderCurrentStep() {
     "</span>" +
     '<button class="step-nav-btn" onclick="nextStep()" ' +
     (currentStep >= allSteps.length - 1 ? "disabled" : "") +
-    ">&#8250;</button>" +
+    ">&rsaquo;</button>" +
     "</div></div>";
 
   html +=
@@ -649,18 +653,92 @@ function renderCurrentStep() {
   panel.innerHTML = html;
 }
 
+function clearSourceHighlights() {
+  clearHighlights("A");
+  clearHighlights("B");
+}
+
+function renderCurrentStep() {
+  var step = allSteps[currentStep];
+  if (!step) return;
+
+  var panel = document.getElementById("stepsPanel");
+  var panelLabel = allSteps.length === 1 ? "Step" : "Steps";
+  var html =
+    '<div class="steps-header">' +
+    '<span class="steps-title">' + panelLabel + ' (' + allSteps.length + ')</span>' +
+    '<div class="steps-nav">' +
+    '<button class="step-nav-btn" onclick="prevStep()" ' +
+    (currentStep <= 0 ? "disabled" : "") +
+    ">&lsaquo;</button>" +
+    '<span class="step-counter">' +
+    (currentStep + 1) +
+    " / " +
+    allSteps.length +
+    "</span>" +
+    '<button class="step-nav-btn" onclick="nextStep()" ' +
+    (currentStep >= allSteps.length - 1 ? "disabled" : "") +
+    ">&rsaquo;</button>" +
+    "</div></div>";
+
+  html +=
+    '<div class="step-block"><div class="step-cell-label">cell ' +
+    step.cell +
+    '</div><div class="step-formula">';
+
+  if (step.terms) {
+    var exprParts = step.terms.map(function (t) {
+      return (
+        '<span class="term-a">' +
+        fmtNum(t[0]) +
+        '</span><span class="op">&times;</span><span class="term-b">' +
+        fmtNum(t[1]) +
+        "</span>"
+      );
+    });
+    html += exprParts.join('<span class="op"> + </span>');
+    html +=
+      '<br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  } else if (step.type === "elementwise") {
+    html +=
+      '<span class="term-a">' +
+      fmtNum(step.a) +
+      '</span><span class="op"> ' +
+      step.sym +
+      ' </span><span class="term-b">' +
+      fmtNum(step.b) +
+      '</span><br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  } else if (step.type === "scalar") {
+    html +=
+      '<span class="term-b">' +
+      fmtNum(step.k) +
+      '</span><span class="op"> &times; </span><span class="term-a">' +
+      fmtNum(step.a) +
+      '</span><br><span class="op">= </span><span class="result">' +
+      fmtNum(step.result) +
+      "</span>";
+  }
+
+  html += "</div></div>";
+  panel.innerHTML = html;
+  scrollResultCell();
+}
+
 function prevStep() {
   if (currentStep > 0) {
     currentStep--;
     renderCurrentStep();
-    scrollResultCell();
   }
 }
+
 function nextStep() {
   if (currentStep < allSteps.length - 1) {
     currentStep++;
     renderCurrentStep();
-    scrollResultCell();
   }
 }
 
@@ -753,7 +831,7 @@ function addHistory(label, mat, isScalar) {
     }),
     isScalar: isScalar,
   });
-  if (calcHistory.length > 8) calcHistory.pop();
+  if (calcHistory.length > 10) calcHistory.pop();
   renderHistory();
 }
 

@@ -4,123 +4,115 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
-    <title>Matrix Calculator</title>
+    <title>Matrix Calculator Pro</title>
+    <meta name="description" content="Professional matrix calculator for complex mathematical operations with step-by-step computation visualization." />
   </head>
   <body>
     <div id="app">
-      <div class="top-bar">
+      <!-- Navigation Header -->
+      <header class="top-bar">
         <div>
-          <h1>Matrix calculator</h1>
+          <h1>Matrix Calculator Pro</h1>
           <div class="shortcut-row">
-            <span class="shortcut-hint"
-              ><span class="kbd">↑↓←→</span> navigate cells</span
-            >
-            <span class="shortcut-hint"
-              ><span class="kbd">Enter</span> compute</span
-            >
-            <span class="shortcut-hint"><span class="kbd">R</span> reset</span>
-            <span class="shortcut-hint"
-              ><span class="kbd">Ctrl+C</span> copy result</span
-            >
+            <span class="shortcut-hint">
+              <span class="kbd">↑↓←→</span> navigate cells
+            </span>
+            <span class="shortcut-hint">
+              <span class="kbd">Enter</span> compute
+            </span>
+            <span class="shortcut-hint">
+              <span class="kbd">R</span> reset
+            </span>
+            <span class="shortcut-hint">
+              <span class="kbd">Ctrl+C</span> copy result
+            </span>
           </div>
         </div>
         <div class="top-actions">
-          <button class="dark-toggle" id="darkToggle" onclick="toggleDark()">
+          <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" aria-label="Toggle dark mode">
             dark mode
           </button>
         </div>
-      </div>
+      </header>
 
-      <div class="workspace" id="workspace">
-        <div class="matrix-card" id="cardA">
-          <div class="card-header">
+      <!-- Matrix Workspace -->
+      <section class="workspace" id="workspace">
+        <!-- Matrix A Card -->
+        <article class="matrix-card" id="cardA">
+          <header class="card-header">
             <div class="card-label">
               <span class="label-badge">A</span>
-              Matrix A
+              <span>Matrix A</span>
             </div>
             <div class="quick-actions">
-              <button class="btn-sm" onclick="randomFill('A')">random</button>
-              <button class="btn-sm" onclick="identityFill('A')">
-                identity
-              </button>
-              <button class="btn-sm" onclick="clearMatrix('A')">clear</button>
+              <button class="btn-sm" onclick="randomFill('A')" title="Fill with random values">random</button>
+              <button class="btn-sm" onclick="identityFill('A')" title="Create identity matrix">identity</button>
+              <button class="btn-sm" onclick="clearMatrix('A')" title="Clear all values">clear</button>
             </div>
-          </div>
+          </header>
+          
           <div class="size-controls">
-            <label>rows</label>
-            <select
-              class="size-select"
-              id="rowsA"
-              onchange="rebuildMatrix('A')"
-            >
+            <label for="rowsA">rows</label>
+            <select class="size-select" id="rowsA" onchange="rebuildMatrix('A')" aria-label="Matrix A rows">
               <option value="2" selected>2</option>
               <option value="3">3</option>
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
-            <label>cols</label>
-            <select
-              class="size-select"
-              id="colsA"
-              onchange="rebuildMatrix('A')"
-            >
+            <label for="colsA">cols</label>
+            <select class="size-select" id="colsA" onchange="rebuildMatrix('A')" aria-label="Matrix A columns">
               <option value="2" selected>2</option>
               <option value="3">3</option>
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
           </div>
-          <div class="matrix-grid-wrap" style="padding: 0 12px">
+          
+          <div class="matrix-grid-wrap">
             <div class="matrix-grid" id="gridA"></div>
           </div>
-        </div>
+        </article>
 
-        <div class="matrix-card" id="cardB">
-          <div class="card-header">
+        <!-- Matrix B Card -->
+        <article class="matrix-card" id="cardB">
+          <header class="card-header">
             <div class="card-label">
               <span class="label-badge b">B</span>
-              Matrix B
+              <span>Matrix B</span>
             </div>
             <div class="quick-actions">
-              <button class="btn-sm" onclick="randomFill('B')">random</button>
-              <button class="btn-sm" onclick="identityFill('B')">
-                identity
-              </button>
-              <button class="btn-sm" onclick="clearMatrix('B')">clear</button>
+              <button class="btn-sm" onclick="randomFill('B')" title="Fill with random values">random</button>
+              <button class="btn-sm" onclick="identityFill('B')" title="Create identity matrix">identity</button>
+              <button class="btn-sm" onclick="clearMatrix('B')" title="Clear all values">clear</button>
             </div>
-          </div>
+          </header>
+          
           <div class="size-controls">
-            <label>rows</label>
-            <select
-              class="size-select"
-              id="rowsB"
-              onchange="rebuildMatrix('B')"
-            >
+            <label for="rowsB">rows</label>
+            <select class="size-select" id="rowsB" onchange="rebuildMatrix('B')" aria-label="Matrix B rows">
               <option value="2" selected>2</option>
               <option value="3">3</option>
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
-            <label>cols</label>
-            <select
-              class="size-select"
-              id="colsB"
-              onchange="rebuildMatrix('B')"
-            >
+            <label for="colsB">cols</label>
+            <select class="size-select" id="colsB" onchange="rebuildMatrix('B')" aria-label="Matrix B columns">
               <option value="2" selected>2</option>
               <option value="3">3</option>
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
           </div>
-          <div class="matrix-grid-wrap" style="padding: 0 12px">
+          
+          <div class="matrix-grid-wrap">
             <div class="matrix-grid" id="gridB"></div>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      <div class="op-row">
-        <select class="op-select" id="opSelect" onchange="onOpChange()">
+      <!-- Operations & Controls -->
+      <section class="op-row">
+        <select class="op-select" id="opSelect" onchange="onOpChange()" aria-label="Select operation">
           <option value="multiply">A × B — multiply</option>
           <option value="add">A + B — add</option>
           <option value="subtract">A − B — subtract</option>
@@ -139,8 +131,10 @@
             id="scalarK"
             value="2"
             placeholder="k"
+            aria-label="Scalar multiplier"
           />
         </div>
+
         <div class="scalar-input-wrap" id="powerWrap" style="display: none">
           <label for="powerN">n =</label>
           <input
@@ -151,67 +145,72 @@
             placeholder="n"
             min="0"
             max="10"
+            aria-label="Power exponent"
           />
         </div>
 
-        <button class="compute-btn" id="computeBtn" onclick="compute()">
+        <button class="compute-btn" id="computeBtn" onclick="compute()" aria-label="Compute result">
           <div class="spinner"></div>
           <span class="btn-text">compute</span>
         </button>
-        <button class="reset-btn" onclick="resetAll()">reset</button>
-      </div>
 
-      <div class="status-bar" id="statusBar"></div>
-      <div class="error-card" id="errorCard">
-        <div class="error-title" id="errorTitle">Dimension mismatch</div>
+        <button class="reset-btn" onclick="resetAll()" aria-label="Reset all matrices">reset</button>
+      </section>
+
+      <!-- Status & Error Messages -->
+      <div class="status-bar" id="statusBar" role="status" aria-live="polite"></div>
+      <div class="error-card" id="errorCard" role="alert">
+        <div class="error-title" id="errorTitle">Error</div>
         <div class="error-msg" id="errorMsg"></div>
       </div>
 
-      <div class="result-section" id="resultSection">
-        <div class="result-card">
-          <div class="result-header">
+      <!-- Results Section -->
+      <section class="result-section" id="resultSection">
+        <article class="result-card">
+          <header class="result-header">
             <div>
               <div class="result-title">Result</div>
               <div class="result-op" id="resultOp"></div>
             </div>
             <div class="result-actions">
-              <button class="export-btn" id="copyBtn" onclick="copyResult()">
+              <button class="export-btn" id="copyBtn" onclick="copyResult()" title="Copy to clipboard">
                 copy
               </button>
-              <button class="export-btn" onclick="downloadJSON()">json</button>
-              <button class="export-btn" onclick="downloadText()">text</button>
+              <button class="export-btn" onclick="downloadJSON()" title="Download as JSON">
+                json
+              </button>
+              <button class="export-btn" onclick="downloadText()" title="Download as text">
+                text
+              </button>
             </div>
-          </div>
+          </header>
+
           <div class="hint-box" id="hoverHint" style="display: none">
             hover a result cell to highlight source rows/cols
           </div>
+
           <div class="result-body">
             <div class="result-matrix-wrap">
               <div class="result-matrix">
                 <div class="result-grid" id="resultGrid"></div>
               </div>
-              <div
-                style="
-                  font-size: 11px;
-                  color: var(--color-text-secondary);
-                  margin-top: 6px;
-                "
-                id="resultDimLabel"
-              ></div>
+              <div id="resultDimLabel"></div>
             </div>
             <div class="steps-panel" id="stepsPanel"></div>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      <div class="history-section" id="historySection" style="display: none">
-        <div class="history-header" onclick="toggleHistory()">
+      <!-- Calculation History -->
+      <section class="history-section" id="historySection" style="display: none">
+        <header class="history-header" onclick="toggleHistory()" role="button" tabindex="0" aria-expanded="false">
           <span class="history-toggle-label">recent calculations</span>
           <span class="history-arrow" id="histArrow">▼</span>
-        </div>
+        </header>
         <div class="history-list" id="historyList"></div>
-      </div>
+      </section>
     </div>
+
     <script src="script.js"></script>
   </body>
 </html>
